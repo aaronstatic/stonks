@@ -35,6 +35,8 @@ typings/
 .yarn-integrity
 
 client/public/logos
+client/public/gamma
 
 .env
 .env.local
+

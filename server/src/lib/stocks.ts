@@ -161,7 +161,7 @@ export async function getStockDetails(ticker: string): Promise<any> {
 
 export async function getNextExpiryGamma(ticker: string): Promise<any> {
     const collection = db.collection('options-gamma');
-    const today = DateTime.now().setZone("UTC").startOf('day');
+    const today = DateTime.now().setZone("UTC").startOf('day').minus({ days: 1 });
     const gamma = await collection.find({ ticker: ticker }).toArray();
 
     let earliest = null;
