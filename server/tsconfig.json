@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "outDir": "dist",
+    "target": "esnext",
+    "module": "commonjs",
+    "strict": true,
+    "esModuleInterop": true,
+    "paths": {
+      "@schema/*": [
+        "../schema/*"
+      ]
+    }
+  },
+  "include": [
+    "src"
+  ]
+}
