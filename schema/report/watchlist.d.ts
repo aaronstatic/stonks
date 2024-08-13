@@ -9,4 +9,5 @@ export type WatchlistReportItem = {
     nextEarnings: string;
     nextEarningsTime: string;
     _id: string;
+    gamma: number;
 }

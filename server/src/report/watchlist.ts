@@ -2,7 +2,7 @@ import { WatchlistReportItem } from '@schema/report/watchlist';
 
 import db from '../lib/mongo';
 import { DateTime } from 'luxon';
-import { getLatestStockCandle, getStockPrice } from '../lib/stocks';
+import { getLatestStockCandle, getNextExpiryGammaZone, getStockPrice } from '../lib/stocks';
 import { calculateDCF, findImpliedRate } from '../lib/dcf';
 
 export default async function watchlist(owner: string = '', params: any = {}): Promise<WatchlistReportItem[]> {
@@ -60,7 +60,7 @@ export default async function watchlist(owner: string = '', params: any = {}): P
             nextEarnings = earliestEarnings.toISODate();
         }
 
-
+        const gamma = await getNextExpiryGammaZone(doc.ticker);
 
         watchlist.push({
             _id: doc._id.toString(),
@@ -72,7 +72,8 @@ export default async function watchlist(owner: string = '', params: any = {}): P
             changePercent: (candle.close - candle.open) / candle.open * 100,
             currency: currency,
             name: name,
-            intrinsicValue: intrinsicValue
+            intrinsicValue: intrinsicValue,
+            gamma: gamma
         });
     }
 

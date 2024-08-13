@@ -92,6 +92,16 @@ class Watchlist extends CRUDTable {
                         }}
                     </Table.Cell>
                 </Table.Column>
+                <Table.Column width={80} align="center">
+                    <Table.HeaderCell>Gamma</Table.HeaderCell>
+                    <Table.Cell>
+                        {(rowData: WatchlistReportItem) => (
+                            <span className={rowData.gamma == 0 ? "zero" : rowData.gamma > 0 ? "green" : "red"}>
+                                {rowData.gamma > 0 ? "+γ" : "-γ"}
+                            </span>
+                        )}
+                    </Table.Cell>
+                </Table.Column>
                 <Table.Column width={140} align="center">
                     <Table.HeaderCell>Next Earnings</Table.HeaderCell>
                     <Table.Cell>

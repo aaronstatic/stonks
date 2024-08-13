@@ -87,6 +87,10 @@ const DefaultSizes: SizeMap = {
   "AddTrade": {
     width: 1000,
     height: 650
+  },
+  "Watchlist": {
+    width: 890,
+    height: 600
   }
 }
 
