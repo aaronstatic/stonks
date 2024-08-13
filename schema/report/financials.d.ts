@@ -10,6 +10,9 @@ export type FinancialsReport = {
     ticker: string
     end_date: string
     intrinsic_value: number
+    time_series: [{
+        [key: string]: any
+    }]
     financials: {
         cash_flow_statement: {
             [key: string]: FinancialsSection

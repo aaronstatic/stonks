@@ -6,6 +6,7 @@ import finnhub from "../lib/finnhub";
 import FileSystem from "fs";
 import { getOpenOptions } from "../lib/options";
 import { getHolding } from "../lib/holdings";
+import yahooFinance from "yahoo-finance2";
 
 export const sectorFunds = [
     "CIBR",
@@ -242,12 +243,18 @@ export default async function updateStocks(): Promise<boolean> {
             //update financials
             const existingFinancials = await financialsCollection.findOne({ ticker: ticker });
             let needToUpdateFinance = false;
+            let needToUpdateFinanceYahoo = false;
             if (!existingFinancials) {
                 needToUpdateFinance = true;
             } else {
                 const lastUpdate = DateTime.fromISO(existingFinancials.lastUpdate);
                 if (lastUpdate.diffNow('days').days > 7) {
                     needToUpdateFinance = true;
+                    needToUpdateFinanceYahoo = true;
+                } else {
+                    if (!existingFinancials.timeSeries) {
+                        needToUpdateFinanceYahoo = true;
+                    }
                 }
             }
 
@@ -276,6 +283,25 @@ export default async function updateStocks(): Promise<boolean> {
                 });
             }
 
+            if (needToUpdateFinanceYahoo) {
+                console.log("Updating financials for", ticker, "from Yahoo");
+
+                const timeSeries = await yahooFinance.fundamentalsTimeSeries(ticker, {
+                    module: "all",
+                    period1: "0",
+                });
+
+                await financialsCollection.findOneAndUpdate({ ticker: ticker }, {
+                    $set: {
+                        timeSeries: timeSeries
+                    }
+                }, {
+                    upsert: true
+                });
+
+                //wait 1 sec
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
         }
     }
 

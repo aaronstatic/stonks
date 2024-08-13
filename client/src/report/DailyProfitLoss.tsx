@@ -20,7 +20,7 @@ export default function DailyProfitLoss() {
         gainHistory.push({
             x: DateTime.fromISO(day.date).toJSDate(),
             y: day.profitloss,
-            fillColor: day.profitloss > 0 ? "#58b15b" : "#f04f43"
+            fillColor: day.profitloss > 0 ? "#58b15bff" : "#f04f43ff"
         });
     }
     gainHistory.sort((a, b) => a.x.getTime() - b.x.getTime());

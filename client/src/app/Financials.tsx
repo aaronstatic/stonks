@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { FinancialsReport } from "@schema/report/financials";
-import { Loader, Table } from "rsuite";
+import { Loader, Stack, Table } from "rsuite";
 import Server from "../lib/Server";
 import { Stat, StatLabel, Stats, StatValue } from "../report/component/Stats";
 import styled from "styled-components";
 import { formatLargeNumber } from "../util/format";
+import ReactApexChart from "react-apexcharts";
+import { DateTime } from "luxon";
 
 const SectionHeader = styled.h3`
     margin-bottom: 10px;
@@ -110,6 +112,39 @@ export default function Financials({ ticker, tickerDetails }: { ticker: string, 
     }
     comprehensiveIncome.sort((a, b) => a.order - b.order);
 
+    const eps = [];
+    const netIncome = [];
+
+    for (const item of financials.time_series) {
+        let basicEPS = 0;
+        let net = 0;
+        if (item.basicEPS) {
+            basicEPS = item.basicEPS;
+        } else {
+            if (eps.length > 0) {
+                basicEPS = eps[eps.length - 1].y;
+            }
+        }
+        if (item.netIncome) {
+            net = item.netIncome;
+        } else {
+            if (netIncome.length > 0) {
+                net = netIncome[netIncome.length - 1].y;
+            }
+        }
+        eps.push({
+            x: DateTime.fromISO(item.date).toUTC().minus({ days: 1 }).toFormat("Qq yyyy"),
+            y: basicEPS,
+            fillColor: basicEPS > 0 ? "#58b15bff" : "#f04f43ff"
+        });
+        netIncome.push({
+            x: DateTime.fromISO(item.date).toUTC().minus({ days: 1 }).toFormat("Qq yyyy"),
+            y: net,
+            fillColor: net > 0 ? "#58b15bff" : "#f04f43ff"
+        });
+    }
+
+
     return (
         <>
             <CompanyName>[{ticker}] {financials.company_name}</CompanyName>
@@ -124,23 +159,109 @@ export default function Financials({ ticker, tickerDetails }: { ticker: string, 
                 </FinancialsStat>
                 {financials.financials.income_statement && financials.financials.income_statement.basic_earnings_per_share && (
                     <FinancialsStat>
-                        <StatLabel>EPS</StatLabel>
+                        <StatLabel>EPS (YoY)</StatLabel>
                         <StatValue>{financials.financials.income_statement.basic_earnings_per_share.value.toFixed(2)} {financials.financials.income_statement.basic_earnings_per_share.unit}</StatValue>
                     </FinancialsStat>
                 )}
                 {financials.financials.income_statement && financials.financials.income_statement.net_income_loss && (
                     <FinancialsStat>
-                        <StatLabel>Net Income</StatLabel>
+                        <StatLabel>Net Income (YoY)</StatLabel>
                         <StatValue>{formatLargeNumber(financials.financials.income_statement.net_income_loss.value)} {financials.financials.income_statement.net_income_loss.unit}</StatValue>
                     </FinancialsStat>
                 )}
-                {financials.intrinsic_value > 0 && tickerDetails && tickerDetails.share_class_shares_outstanding && (
-                    <FinancialsStat>
-                        <StatLabel>Intrinsic Value</StatLabel>
-                        <StatValue>{(financials.intrinsic_value / tickerDetails.share_class_shares_outstanding).toFixed(2)} {financials.financials.income_statement.net_income_loss.unit}</StatValue>
-                    </FinancialsStat>
-                )}
             </FinancialsStats>
+            {financials.time_series.length > 0 && (
+                <>
+                    <Stack>
+                        <Stack.Item grow={1}>
+                            <ReactApexChart
+                                options={{
+                                    title: {
+                                        text: "EPS (QoQ)",
+                                        align: "center"
+                                    },
+                                    theme: {
+                                        mode: "dark"
+                                    },
+                                    chart: {
+                                        toolbar: {
+                                            show: false
+                                        },
+                                        background: "transparent",
+                                        foreColor: "#666",
+                                        type: "bar",
+                                        height: 250
+                                    },
+                                    grid: {
+                                        borderColor: "#333"
+                                    },
+                                    dataLabels: {
+                                        enabled: false
+                                    },
+                                    yaxis: {
+                                        labels: {
+                                            formatter: (value) => {
+                                                return "$" + value.toFixed(2);
+                                            }
+                                        }
+                                    }
+                                }}
+                                series={[
+                                    {
+                                        name: 'EPS',
+                                        data: eps
+                                    }
+                                ]}
+                                type="bar"
+                                height={250}
+                            />
+                        </Stack.Item>
+                        <Stack.Item grow={1}>
+                            <ReactApexChart
+                                options={{
+                                    title: {
+                                        text: "Net Income (QoQ)",
+                                        align: "center"
+                                    },
+                                    theme: {
+                                        mode: "dark"
+                                    },
+                                    chart: {
+                                        toolbar: {
+                                            show: false
+                                        },
+                                        background: "transparent",
+                                        foreColor: "#666",
+                                        type: "bar",
+                                        height: 250
+                                    },
+                                    grid: {
+                                        borderColor: "#333"
+                                    },
+                                    dataLabels: {
+                                        enabled: false
+                                    },
+                                    yaxis: {
+                                        labels: {
+                                            formatter: (value) => {
+                                                return "$" + formatLargeNumber(value, 0);
+                                            }
+                                        }
+                                    }
+                                }}
+                                series={[
+                                    {
+                                        name: 'Net Income',
+                                        data: netIncome
+                                    }
+                                ]}
+                                type="bar"
+                                height={250}
+                            />
+                        </Stack.Item>
+                    </Stack>
+                </>
+            )}
             <SectionHeader>Cash Flow</SectionHeader>
             <FinancialsTable data={cashFlow} />
             <SectionHeader>Balance Sheet</SectionHeader>

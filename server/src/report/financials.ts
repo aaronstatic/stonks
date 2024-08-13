@@ -20,6 +20,7 @@ export default async function financialsReport(owner: string = "", params: any =
     }
 
     return {
+        time_series: financials.timeSeries || [],
         intrinsic_value: intrinsic_value,
         company_name: financials.company_name,
         start_date: financials.start_date,
