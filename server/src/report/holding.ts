@@ -7,7 +7,7 @@ import { getExchangeRate } from "../lib/currency";
 import { getDayChange, getNextExpiryGammaZone, getStockDayCandle, getStockPrice, sortEvent } from "../lib/stocks";
 import Option from "@schema/option";
 import { castHolding, getHolding } from "../lib/holdings";
-import { castOption, getOptionDayCandle, getOptionDayChange, getOptionPrice } from "../lib/options";
+import { castOption, getOpenOptionQuantity, getOpenOptionSnapshot, getOptionDayCandle, getOptionDayChange, getOptionPrice } from "../lib/options";
 import { ObjectId } from "mongodb";
 
 export default async function holdingReport(owner: string = "", params: any = {}): Promise<HoldingReport | null> {
@@ -30,7 +30,8 @@ export default async function holdingReport(owner: string = "", params: any = {}
             return await cryptoHolding(holding, toDateDT);
         }
     } else {
-        const doc = await db.collection('option').findOne({ owner: owner, name: ticker });
+        console.log(ticker);
+        const doc = await db.collection('option').findOne({ owner: owner, _id: new ObjectId(ticker) });
         if (doc == null) {
             return null;
         }
@@ -294,6 +295,9 @@ async function optionHolding(option: Option, toDateDT: DateTime): Promise<Holdin
     const trades = await db.collection('optiontrade').find({ option: option._id.toString() }).toArray();
     trades.sort(sortEvent);
 
+    const expiry = DateTime.fromISO(option.expiry).toFormat("d MMM");
+    const name = `${holding.ticker} ${option.strike}${option.type == "Call" ? "C" : "P"} ${expiry}`;
+
     let quantity = 0;
     let cost = 0;
     let averageOpenPrice = 0;
@@ -302,6 +306,33 @@ async function optionHolding(option: Option, toDateDT: DateTime): Promise<Holdin
     let realizedfy = 0;
 
     const todayCandle = await getOptionDayCandle(option._id, toDateDT.toISODate() || "", false);
+    if (!todayCandle) {
+        const { qty, avgPrice } = await getOpenOptionSnapshot(option._id);
+        return {
+            name: name,
+            realized: 0,
+            realizedfy: 0,
+            lastPrice: avgPrice,
+            id: holding._id.toString(),
+            currency: "USD",
+            ticker: name,
+            type: "Option",
+            risk: 0,
+            unrealized: 0,
+            openQuantity: qty,
+            averageOpenPrice: avgPrice,
+            value: avgPrice * qty,
+            today: 0,
+            cost: avgPrice * qty,
+            nextEarnings: "",
+            nextEarningsTime: "",
+            lastDividend: "",
+            lastDividendAmount: 0,
+            nextDividend: "",
+            nextDividendAmount: 0,
+            gamma: 0
+        }
+    }
 
     const startOfDay = toDateDT.toUTC().startOf('day');
     const endOfDay = startOfDay.endOf('day');
@@ -337,8 +368,7 @@ async function optionHolding(option: Option, toDateDT: DateTime): Promise<Holdin
             averageOpenPrice = 0;
     }
 
-    const expiry = DateTime.fromISO(option.expiry).toFormat("d MMM");
-    const name = `${holding.ticker} ${option.strike}${option.type == "Call" ? "C" : "P"} ${expiry}`;
+
 
     let price = await getOptionPrice(option._id, toDateDT.toISODate() || "");
 

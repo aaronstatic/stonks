@@ -42,7 +42,7 @@ export async function getOpenStockHoldings(owner: string = "", toDate: string = 
             }
 
         }
-        if (quantity > 0) {
+        if (quantity != 0) {
             openHoldings.push(holding);
         }
     }

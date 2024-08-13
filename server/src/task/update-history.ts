@@ -10,6 +10,11 @@ export default async function updateHistory() {
         await updateHistoryForUser(user._id.toString());
     }
 
+    const portfolios = await db.collection('portfolio').find({}).toArray();
+    for (const portfolio of portfolios) {
+        await updateHistoryForUser(portfolio._id.toString());
+    }
+
     return true;
 }
 

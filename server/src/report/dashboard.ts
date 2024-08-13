@@ -67,7 +67,8 @@ export default async function dashboard(owner: string = "", params: any = {}): P
     const openOptions = await getOpenOptions(owner, toDate);
 
     for (const option of openOptions) {
-        const report = await holdingReport(owner, { ticker: option.name, type: "Option", toDate: toDate });
+        console.log(option.name);
+        const report = await holdingReport(owner, { ticker: option._id.toString(), type: "Option", toDate: toDate });
         if (report) {
             totalValue += report.value;
             totalUnrealized += report.unrealized;
@@ -85,8 +86,17 @@ export default async function dashboard(owner: string = "", params: any = {}): P
         distribution["Cash"] = 0;
     }
 
+    const user = await db.collection('users').findOne({
+        _id: new ObjectId(owner)
+    });
+    let currency = "USD";
+
+    if (user) {
+        currency = user.currency;
+    }
+
     const accounts = await getAllAccounts(owner, toDate);
-    const accountBalance = await getTotalAccountBalance(owner, toDate);
+    const accountBalance = await getTotalAccountBalance(owner, toDate, currency);
 
     distribution["Cash"] += accountBalance;
     totalValue += accountBalance;
@@ -142,15 +152,6 @@ export default async function dashboard(owner: string = "", params: any = {}): P
             averageOpenPrice = cost / quantity;
         }
         totalRealized += realizedfy;
-    }
-
-    const user = await db.collection('users').findOne({
-        _id: new ObjectId(owner)
-    });
-    let currency = "USD";
-
-    if (user) {
-        currency = user.currency;
     }
 
     return {

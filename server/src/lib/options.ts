@@ -56,7 +56,7 @@ export async function getOpenOptions(owner: string = "", toDate: string = ""): P
                 quantity -= trade.quantity;
             }
         }
-        if (quantity > 0) {
+        if (quantity != 0) {
             openOptions.push(option);
         }
     }
@@ -158,4 +158,46 @@ export async function getOptionTicker(optionId: string): Promise<string> {
         await collection.findOneAndUpdate({ _id: new ObjectId(option._id) }, { $set: { name: option.name } });
     }
     return option.name;
+}
+
+export async function getOpenOptionQuantity(id: string): Promise<number> {
+    const collection = db.collection('optiontrade');
+    const trades = await collection.find({ option: id }).toArray();
+    let quantity = 0;
+    for (const trade of trades) {
+        if (trade.type === 'BUY') {
+            quantity += trade.quantity;
+        } else {
+            quantity -= trade.quantity;
+        }
+    }
+    return quantity;
+}
+
+export async function getOpenOptionSnapshot(id: string, toDate: string = ""): Promise<{ qty: number, avgPrice: number }> {
+
+    let today = DateTime.fromISO(toDate + "T00:00:00.000Z");
+    if (toDate === "") {
+        today = DateTime.now().endOf('day').toUTC();
+    }
+
+    const collection = db.collection('optiontrade');
+    const trades = await collection.find({ option: id }).toArray();
+    let quantity = 0;
+    let cost = 0;
+    for (const trade of trades) {
+        const tradeTimestamp = DateTime.fromISO(trade.timestamp).toUTC();
+        if (tradeTimestamp > today) {
+            continue;
+        }
+        if (trade.type === 'BUY') {
+            quantity += trade.quantity;
+            cost += trade.quantity * trade.price * 100;
+        } else {
+            quantity -= trade.quantity;
+            cost -= trade.quantity * trade.price * 100;
+        }
+    }
+    return { qty: quantity, avgPrice: cost / quantity };
+
 }
