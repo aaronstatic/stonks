@@ -94,6 +94,7 @@ const DefaultSizes: SizeMap = {
   }
 }
 
+
 export type MenuItem = {
   id: string;
   title: string;
