@@ -3,9 +3,18 @@ import db from "../lib/mongo";
 import openHoldings from "../report/dashboard";
 
 export default async function updateHistory() {
-    const collection = db.collection('history');
-    const owner = process.env.DEFAULT_USER || "";
+    const userCollection = db.collection('users');
 
+    const users = await userCollection.find({}).toArray();
+    for (const user of users) {
+        await updateHistoryForUser(user._id.toString());
+    }
+
+    return true;
+}
+
+async function updateHistoryForUser(owner: string) {
+    const collection = db.collection('history');
     let currentDay = DateTime.now().toUTC().startOf("day").minus({ days: 2 });
     const end = DateTime.now().toUTC().startOf("day");
 
@@ -20,6 +29,4 @@ export default async function updateHistory() {
         );
         currentDay = currentDay.plus({ days: 1 });
     }
-
-    return true;
 }

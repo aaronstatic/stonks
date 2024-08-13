@@ -5,7 +5,7 @@ import { getStockPrice } from "../lib/stocks";
 
 export default async function financialsReport(owner: string = "", params: any = {}): Promise<GammaReport[]> {
     const ticker: string = params.ticker;
-    const today = DateTime.now().setZone("UTC").startOf('day').minus({ days: 1 });
+    const today = DateTime.now().setZone("UTC").startOf('day');
     const spotPrice = await getStockPrice(ticker);
 
     //Get all current and future gamma
@@ -15,7 +15,7 @@ export default async function financialsReport(owner: string = "", params: any =
     const gammaReports: GammaReport[] = [];
 
     for (const doc of gamma) {
-        const date = DateTime.fromISO(doc.date);
+        const date = DateTime.fromISO(doc.date + "T00:00:00.000Z").toUTC();
         if (date < today) continue;
         const report: GammaReport = {
             date: date.toISO() || "",

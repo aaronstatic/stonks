@@ -192,11 +192,12 @@ export default function Dashboard() {
         });
     }, []);
 
-    if (!data) return <Loader center size="lg" />;
+    if (!data || !userData) return <Loader center size="lg" />;
 
-    const todayPerc = (data.today / data.totalValue * 100);
-    const unrealizedPerc = (data.unrealized / data.totalValue * 100);
-
+    let todayPerc = (data.today / data.totalValue * 100);
+    let unrealizedPerc = (data.unrealized / data.totalValue * 100);
+    if (isNaN(todayPerc)) todayPerc = 0;
+    if (isNaN(unrealizedPerc)) unrealizedPerc = 0;
 
     //Distribution chart
     const series = [];
@@ -211,11 +212,24 @@ export default function Dashboard() {
     const cryptoHoldings = data.holdings.filter(h => h.type === "Crypto");
     const optionHoldings = data.holdings.filter(h => h.type === "Option");
 
-    const indexRow1 = ["SPY", "QQQ", "IWM", "TVC:DJI", "BINANCE:BTCUSD"];
-    const indexRow2 = ["CBOE_DLY:VIX", "ICEUS_DLY:DX1!", "TVC:GOLD", "CAPITALCOM:COPPER", "TVC:USOIL"];
+    const indexRow1 = ["SPY", "QQQ", "IWM", "DIA", "BTC"];
+    const indexRow2 = ["^VIX", "DX-Y.NYB", "GC=F", "HG=F", "CL=F"];
 
-    const onClickIndex = (index: string) => {
-        Server.emit("open-object", { type: 'index', id: index });
+    const names: { [index: string]: string } = {
+        "SPY": "SPY",
+        "QQQ": "QQQ",
+        "IWM": "IWM",
+        "DIA": "DIA",
+        "BTC": "Bitcoin",
+        "^VIX": "VIX",
+        "DX-Y.NYB": "DXY",
+        "GC=F": "Gold",
+        "HG=F": "Copper",
+        "CL=F": "Oil"
+    }
+
+    const onClickIndex = (index: string, type: string) => {
+        Server.emit("open-object", { type: 'index', id: index, subType: type });
     }
 
     return (
@@ -226,8 +240,8 @@ export default function Dashboard() {
                         <SmallStats>
                             {indexRow1.map((index) => {
                                 return (
-                                    <Stat key={index} onClick={() => { onClickIndex(index) }}>
-                                        <StatLabel>{index.includes(":") ? index.split(":")[1] : index}</StatLabel>
+                                    <Stat key={index} onClick={() => { onClickIndex(index, indices[index].type) }}>
+                                        <StatLabel>{names[index]}</StatLabel>
                                         <StatValue>{thousands(indices[index].value.toFixed(2))}</StatValue>
                                         <StatSubValue className={indices[index].change > 0 ? "green" : "red"}>{indices[index].changePercent.toFixed(2)}%</StatSubValue>
                                         {indices[index].gamma != 0 && (
@@ -240,8 +254,8 @@ export default function Dashboard() {
                         <SmallStats>
                             {indexRow2.map((index) => {
                                 return (
-                                    <Stat key={index} onClick={() => { onClickIndex(index) }}>
-                                        <StatLabel>{index.split(":")[1]}</StatLabel>
+                                    <Stat key={index} onClick={() => { onClickIndex(index, indices[index].type) }}>
+                                        <StatLabel>{names[index]}</StatLabel>
                                         <StatValue>{thousands(indices[index].value.toFixed(2))}</StatValue>
                                         <StatSubValue className={indices[index].change > 0 ? "green" : "red"}>{indices[index].changePercent.toFixed(2)}%</StatSubValue>
                                     </Stat>
@@ -253,21 +267,21 @@ export default function Dashboard() {
                 <Stats>
                     <Stat>
                         <StatLabel>Total Value</StatLabel>
-                        <StatValue>{thousands(data.totalValue.toFixed(2))} {data.mainCurrency}</StatValue>
+                        <StatValue>{thousands(data.totalValue.toFixed(2))} {userData?.currency}</StatValue>
                     </Stat>
                     <Stat>
                         <StatLabel>Realized P&L (FY)</StatLabel>
-                        <StatValue className={data.realizedfy > 0 ? "green" : "red"}>{thousands(data.realizedfy.toFixed(2))} {data.mainCurrency}</StatValue>
+                        <StatValue className={data.realizedfy > 0 ? "green" : "red"}>{thousands(data.realizedfy.toFixed(2))} {userData.currency}</StatValue>
 
                     </Stat>
                     <Stat>
                         <StatLabel>Unrealized P&L</StatLabel>
-                        <StatValue className={data.unrealized > 0 ? "green" : "red"}>{thousands(data.unrealized.toFixed(2))} {data.mainCurrency}</StatValue>
+                        <StatValue className={data.unrealized > 0 ? "green" : "red"}>{thousands(data.unrealized.toFixed(2))} {userData.currency}</StatValue>
                         <StatSubValue className={unrealizedPerc > 0 ? "green" : "red"}>{unrealizedPerc.toFixed(2)}%</StatSubValue>
                     </Stat>
                     <Stat>
                         <StatLabel>Today</StatLabel>
-                        <StatValue className={data.today > 0 ? "green" : "red"}>{thousands(data.today.toFixed(2))} {data.mainCurrency}</StatValue>
+                        <StatValue className={data.today > 0 ? "green" : "red"}>{thousands(data.today.toFixed(2))} {userData.currency}</StatValue>
                         <StatSubValue className={todayPerc > 0 ? "green" : "red"}>{todayPerc.toFixed(2)}%</StatSubValue>
                     </Stat>
                 </Stats>

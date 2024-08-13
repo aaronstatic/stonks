@@ -11,7 +11,7 @@ export default function Index() {
     if (!itemData) return null;
     const ticker = itemData.id;
 
-    if (!ticker.includes(":")) {
+    if (itemData.subType === "Stock") {
         return (
             <Tabs defaultActiveKey="chart" style={{ marginTop: '1rem' }}>
                 <Tabs.Tab eventKey="chart" title="Chart">
@@ -25,7 +25,7 @@ export default function Index() {
         )
     } else {
         return (
-            <Candles type="Index" ticker={itemData.id} title={itemData.id} avgOpen={0} />
+            <Candles type={itemData.subType || "Index"} ticker={itemData.id} title={itemData.id} avgOpen={0} />
         );
     }
 }

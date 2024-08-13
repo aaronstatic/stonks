@@ -4,6 +4,9 @@ import polygon from "../lib/polygon";
 
 
 export default async function updateExchangeRates(): Promise<boolean> {
+    const now = DateTime.now().setZone("America/New_York");
+    if (now.minute < 25 || now.minute > 35) return true; //only run halfway through the hour
+
     const collection = db.collection('exchange-rates');
 
     const currencies: string[] = [];
@@ -15,8 +18,12 @@ export default async function updateExchangeRates(): Promise<boolean> {
         }
     }
 
-    if (!currencies.includes(process.env.MAIN_CURRENCY || 'USD')) {
-        currencies.push(process.env.MAIN_CURRENCY || 'USD');
+    const users = await db.collection('users').find({}).toArray();
+    for (const user of users) {
+        if (user.currency == 'USDT') continue; //ignore tethered
+        if (!currencies.includes(user.currency)) {
+            currencies.push(user.currency);
+        }
     }
 
     const currencyPairs: string[] = [];

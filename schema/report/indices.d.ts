@@ -4,5 +4,6 @@ export type IndicesReport = {
         change: number;
         changePercent: number;
         gamma: number;
+        type: string;
     }
 }

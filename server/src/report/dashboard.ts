@@ -9,6 +9,7 @@ import holdingReport from "./holding";
 import { getAllHoldings } from "../lib/holdings";
 import db from "../lib/mongo";
 import { DateTime } from "luxon";
+import { ObjectId } from "mongodb";
 
 export default async function dashboard(owner: string = "", params: any = {}): Promise<DashboardReport> {
     let toDate = params.toDate || "";
@@ -143,9 +144,18 @@ export default async function dashboard(owner: string = "", params: any = {}): P
         totalRealized += realizedfy;
     }
 
+    const user = await db.collection('users').findOne({
+        _id: new ObjectId(owner)
+    });
+    let currency = "USD";
+
+    if (user) {
+        currency = user.currency;
+    }
+
     return {
         accounts,
-        mainCurrency: process.env.MAIN_CURRENCY || "USD",
+        mainCurrency: currency,
         today: dayTotal,
         holdings,
         risk: risk / totalValue,

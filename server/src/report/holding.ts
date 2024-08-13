@@ -8,6 +8,7 @@ import { getDayChange, getNextExpiryGammaZone, getStockDayCandle, getStockPrice,
 import Option from "@schema/option";
 import { castHolding, getHolding } from "../lib/holdings";
 import { castOption, getOptionDayCandle, getOptionDayChange, getOptionPrice } from "../lib/options";
+import { ObjectId } from "mongodb";
 
 export default async function holdingReport(owner: string = "", params: any = {}): Promise<HoldingReport | null> {
     const ticker: string = params.ticker;
@@ -95,8 +96,17 @@ async function stockHolding(holding: Holding, toDateDT: DateTime): Promise<Holdi
     const value = quantity * price;
     let unrealized = value - cost;
 
-    if (holding.currency != process.env.MAIN_CURRENCY) {
-        const exchangeRate = await getExchangeRate(holding.currency + process.env.MAIN_CURRENCY);
+    const user = await db.collection('users').findOne({
+        _id: new ObjectId(holding.owner)
+    });
+    let currency = "USD";
+
+    if (user) {
+        currency = user.currency;
+    }
+
+    if (holding.currency != currency) {
+        const exchangeRate = await getExchangeRate(holding.currency + currency);
 
         costMainCurrency = exchangeRate * cost;
         valueMainCurrency = exchangeRate * value;
@@ -233,7 +243,16 @@ async function cryptoHolding(holding: Holding, toDateDT: DateTime): Promise<Hold
 
     const price = todayCandle ? todayCandle.close : 0;
 
-    const exchangeRate = await getExchangeRate("USD" + process.env.MAIN_CURRENCY);
+    const user = await db.collection('users').findOne({
+        _id: new ObjectId(holding.owner)
+    });
+    let currency = "USD";
+
+    if (user) {
+        currency = user.currency;
+    }
+
+    const exchangeRate = await getExchangeRate("USD" + currency);
 
     const costMainCurrency = exchangeRate * cost;
     const valueMainCurrency = quantity * price * exchangeRate;
@@ -331,8 +350,18 @@ async function optionHolding(option: Option, toDateDT: DateTime): Promise<Holdin
     let costMainCurrency = 0;
     const value = quantity * price * 100;
     let unrealized = value - cost * 100;
-    if (holding.currency != process.env.MAIN_CURRENCY) {
-        const exchangeRate = await getExchangeRate(holding.currency + process.env.MAIN_CURRENCY);
+
+    const user = await db.collection('users').findOne({
+        _id: new ObjectId(holding.owner)
+    });
+    let currency = "USD";
+
+    if (user) {
+        currency = user.currency;
+    }
+
+    if (holding.currency != currency) {
+        const exchangeRate = await getExchangeRate(holding.currency + currency);
         costMainCurrency = exchangeRate * cost;
         valueMainCurrency = exchangeRate * value;
         today = exchangeRate * today;

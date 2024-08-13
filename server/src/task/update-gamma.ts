@@ -23,7 +23,7 @@ export default async function updateGamma(): Promise<boolean> {
         await reportGammaChart("QQQ");
         await reportGamma("QQQ");
 
-        const vix = await getLatestIndexCandle("CBOE_DLY:VIX");
+        const vix = await getLatestIndexCandle("^VIX");
 
         if (vix) {
             const vixLevel = vix.close;

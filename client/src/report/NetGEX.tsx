@@ -19,7 +19,7 @@ export default function DailyProfitLoss({ ticker }: { ticker: string }) {
 
     const expiries = data.map((report, i) => ({
         date: report.date,
-        label: DateTime.fromISO(report.date).toFormat('LLL dd, yyyy'),
+        label: DateTime.fromISO(report.date).toUTC().toFormat('LLL dd, yyyy'),
         value: i
     }));
 
@@ -35,7 +35,7 @@ export default function DailyProfitLoss({ ticker }: { ticker: string }) {
     const putGEX: number[] = [];
     const labels: number[] = [];
     const gexProfile: number[] = [];
-    const date = DateTime.fromISO(report.date).toFormat('LLL dd, yyyy');
+    const date = DateTime.fromISO(report.date).toUTC().toFormat('LLL dd, yyyy');
 
     for (const data of report.data) {
         callGEX.push(data.callGEX);

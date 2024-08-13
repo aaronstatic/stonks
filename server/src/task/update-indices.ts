@@ -1,100 +1,109 @@
 import { DateTime } from "luxon";
 import db from "../lib/mongo";
-import TradingView from "@mathieuc/tradingview";
+
+import yahooFinance from 'yahoo-finance2';
+import { getLatestIndexCandle } from "../lib/indices";
 
 export const indices: string[] = [
     "SPY",
-    "CBOE_DLY:VIX",
-    "ICEUS_DLY:DX1!",
-    "TVC:GOLD",
-    "CAPITALCOM:COPPER",
+    "^VIX",
+    "DX-Y.NYB",
+    "GC=F",
+    "HG=F",
     "IWM",
-    "TVC:USOIL",
-    "TVC:DJI",
+    "CL=F",
+    "DIA",
     "QQQ",
-    "BINANCE:BTCUSD"
+    "BTC"
+];
+
+export const stocks: string[] = [
+    "SPY",
+    "QQQ",
+    "DIA",
+    "IWM",
+    "DIA",
+    "BTC"
 ];
 
 const reset: string[] = [];
 
 export default async function updateIndices(): Promise<boolean> {
-    //remove BTCUSD
-    indices.pop();
+    const now = DateTime.now().setZone("America/New_York");
+    if (now.weekday > 5) return true; //only run on weekdays
+    if (now.hour < 8 || now.hour > 16) return true; //only run during market hours
+    if (now.minute < 25 || now.minute > 35) return true; //only run halfway through the hour
 
-    for (const index of indices) {
-        const candles = await db.collection('stocks-1d').find({ ticker: index }).toArray();
-        if (candles.length > 0) {
-            //remove from indices
+    for (const index of stocks) {
+        if (indices.includes(index)) {
             indices.splice(indices.indexOf(index), 1);
         }
     }
 
-    return new Promise((resolve, reject) => {
-        const done: string[] = [];
-        const collection = db.collection('indices-1d');
+    console.log(`Updating indices: ${indices.join(", ")}`);
 
-        for (const index of reset) {
-            collection.deleteMany({ ticker: index });
+    const collection = db.collection('indices-1d');
+
+    for (const index of reset) {
+        collection.deleteMany({ ticker: index });
+    }
+
+    for (const index of indices) {
+
+        //get last date in db
+        const lastCandle = await getLatestIndexCandle(index);
+        let start = lastCandle ? DateTime.fromISO(lastCandle.timestamp).toUTC() : DateTime.fromISO("2023-01-01T00:00:00.000Z");
+        const end = DateTime.now().startOf('day').plus({ days: 1 }).toUTC();
+
+        if (start >= end) {
+            start = end.minus({ days: 1 });
         }
 
-        const client = new TradingView.Client(); // Creates a websocket client
-        const chart = new client.Session.Chart();
-        let currentIndex = "";
-        let index = 0;
+        console.log(`Updating ${index} from ${start.toISODate()} to ${end.toISODate()}`);
 
-        chart.onError((...err: any[]) => { // Listen for errors (can avoid crash)
-            console.error('Chart error:', ...err);
-            reject(false);
+        const data = await yahooFinance.chart(index, {
+            interval: '1d',
+            period1: start.toISODate() || "",
+            period2: end.toISODate() || ""
         });
 
-        chart.onUpdate(async () => {
-            if (chart.infos.full_name != currentIndex) return;
-            if (done.includes(currentIndex)) return;
+        if (!data) {
+            console.error(`Failed to get data for ${index}`);
+            continue;
+        }
 
-            console.log("Updating index:", chart.infos.short_description);
+        if (!data.quotes) {
+            console.error(`No quotes for ${index}`);
+            continue;
+        }
 
-            const updatePromises = chart.periods.map((candle: any) => {
-                const time = DateTime.fromSeconds(candle.time).toISO();
-                return collection.findOneAndUpdate({
-                    ticker: currentIndex,
-                    timestamp: time,
-                }, {
+        if (index == "DXY.NYB") {
+            console.log(data);
+        }
+
+        for (const quote of data.quotes) {
+            const date = DateTime.fromJSDate(quote.date).toUTC().toISO();
+            if (quote.open == null) continue;
+            await collection.findOneAndUpdate(
+                { ticker: index, timestamp: date },
+                {
                     $set: {
-                        ticker: currentIndex,
-                        timestamp: time,
-                        open: candle.open,
-                        high: candle.max,
-                        low: candle.min,
-                        close: candle.close,
-                        volume: 0
+                        ticker: index,
+                        timestamp: date,
+                        open: quote.open,
+                        high: quote.high,
+                        low: quote.low,
+                        close: quote.close,
+                        volume: quote.volume
                     }
-                }, {
-                    upsert: true
-                });
-            });
+                },
+                { upsert: true }
+            );
+        }
 
-            await Promise.all(updatePromises);
+        //wait 1 second
+        await new Promise(resolve => setTimeout(resolve, 1000));
+    }
 
-            done.push(currentIndex);
-
-            if (index === indices.length - 1) {
-                chart.delete();
-                client.end();
-                resolve(true);
-            } else {
-                setTimeout(() => {
-                    index++;
-                    currentIndex = indices[index];
-                    chart.setMarket(currentIndex, {
-                        timeframe: "D",
-                    });
-                }, 1000);
-            }
-        });
-
-        currentIndex = indices[0];
-        chart.setMarket(currentIndex, {
-            timeframe: "D",
-        });
-    });
+    return true;
 }

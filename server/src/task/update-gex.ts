@@ -13,7 +13,7 @@ export default async function updateGEX(): Promise<boolean> {
     if (now.hour < 8 || now.hour > 16) return true; //only run during market hours
     if (now.minute < 25 || now.minute > 35) return true; //only run halfway through the hour
 
-    const tickers = ["SPY", "QQQ", "IWM"];
+    const tickers = ["SPY", "QQQ", "IWM", "DIA"];
     //add open holdings
     const holdings = await getOpenStockHoldings();
     for (const holding of holdings) {

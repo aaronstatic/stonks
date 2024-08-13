@@ -30,7 +30,7 @@ export default function getReport(data: { owner: string, type: string, params: a
     const type = data.type;
     const params = data.params;
 
-    console.log(`Getting report for ${type}`);
+    //console.log(`Getting report for ${type}`);
 
     return new Promise(async (resolve, reject) => {
         if (!type) {

@@ -13,6 +13,8 @@ import updateHistory from "./task/update-history";
 import updateIndices from "./task/update-indices";
 import updateGEX from "./task/update-gex";
 import updateGamma from "./task/update-gamma";
+import db from "./lib/mongo";
+import { ObjectId } from "mongodb";
 
 let tasks: { [name: string]: BaseTask } = {
     updateCalendar,

@@ -73,6 +73,8 @@ export async function getStockDayChangeCandle(ticker: string, date: string = "")
     const todayDate = DateTime.fromISO(date + "T00:00:00.000Z").setZone("UTC");
     const todayCandle = await getStockDayCandle(ticker, todayDate.toISODate() || "");
 
+    if (!todayCandle) return null;
+
     const todayCandleDate = DateTime.fromISO(todayCandle.timestamp).setZone("UTC");
     const yesterdayDate = todayCandleDate.minus({ days: 1 }).setZone("UTC");
 
@@ -161,14 +163,14 @@ export async function getStockDetails(ticker: string): Promise<any> {
 
 export async function getNextExpiryGamma(ticker: string): Promise<any> {
     const collection = db.collection('options-gamma');
-    const today = DateTime.now().setZone("UTC").startOf('day').minus({ days: 1 });
+    const today = DateTime.now().setZone("UTC").startOf('day');
     const gamma = await collection.find({ ticker: ticker }).toArray();
 
     let earliest = null;
     let earliestDoc = null;
 
     for (const doc of gamma) {
-        const date = DateTime.fromISO(doc.date).toUTC();
+        const date = DateTime.fromISO(doc.date + "T00:00:00.000Z").toUTC();
         if (date >= today) {
             if (!earliest || date < earliest) {
                 earliest = date;

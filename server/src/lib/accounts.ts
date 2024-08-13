@@ -49,13 +49,21 @@ export async function getTotalAccountBalance(owner: string, toDate: string = "")
         owner
     }).toArray();
 
+    const user = await db.collection('users').findOne({
+        _id: new ObjectId(owner)
+    });
+
+    if (!user) {
+        return 0;
+    }
+
     let totalBalance = 0;
     for (const account of accounts) {
         const balance = await getAccountBalance(account._id.toString(), toDate);
 
-        if (account.currency != process.env.MAIN_CURRENCY) {
+        if (account.currency != user.currency) {
             if (!exchangeRates[account.currency]) {
-                exchangeRates[account.currency] = await getExchangeRate(account.currency + process.env.MAIN_CURRENCY);
+                exchangeRates[account.currency] = await getExchangeRate(account.currency + user.currency);
             }
             totalBalance += balance * exchangeRates[account.currency];
         } else {

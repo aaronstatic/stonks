@@ -21,6 +21,7 @@ type WindowData = {
   id: string;
   zIndex: number;
   type: string;
+  subType?: string;
 }
 
 type WindowAPI = {
@@ -160,17 +161,46 @@ class App extends React.Component<any, AppState> {
   }
 
   componentDidMount(): void {
+
+    const redirectLogin = () => {
+      const baseurl = window.location.origin;
+      const encodedUrl = encodeURIComponent(baseurl + "/auth/discord");
+      document.location.href = "https://discord.com/oauth2/authorize?client_id=1242716411923529781&response_type=code&redirect_uri=" + encodedUrl + "&scope=identify+guilds";
+    }
+
     Server.init();
     Server.on("open-object", (data: any) => {
       const type = TypeApplications[data.type];
-      this.openWindow(type, data.id);
+      this.openWindow(type, data.id, data.subType);
     });
-    Server.call("get-userdata", {}).then((userData) => {
-      this.setState({ userData });
-    });
+    //check cookie for session Id
+
+    function getCookie(name: string) {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop()?.split(';').shift();
+    }
+
+    const sessionId = getCookie("sessionId");
+
+    if (sessionId) {
+      Server.getSession(sessionId).then((data) => {
+        console.log(data);
+        if (!data.userData || data.userData.id == "") {
+          redirectLogin();
+          return;
+        }
+
+        this.setState({
+          userData: data.userData
+        });
+      });
+    } else {
+      redirectLogin();
+    }
   }
 
-  openWindow = (type: string, id: string = ""): void => {
+  openWindow = (type: string, id: string = "", subType: string = ""): void => {
     const { windows } = this.state;
     if (id === "") {
       id = "win-" + Math.random().toString(16).slice(2);
@@ -184,7 +214,8 @@ class App extends React.Component<any, AppState> {
         [id]: {
           id,
           zIndex: 0,
-          type
+          type,
+          subType
         }
       }
     });

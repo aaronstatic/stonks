@@ -7,6 +7,7 @@ import Server from "../lib/Server";
 import Option from "@schema/option";
 
 export default function AddTrade() {
+    const [error, setError] = useState<string>("");
     const [trade, setTrade] = useState<Trade>({
         _id: "new",
         type: "BUY",
@@ -73,8 +74,11 @@ export default function AddTrade() {
 
     useEffect(() => {
         Server.getAll('account').then((accounts) => {
-            if (trade.account == "") {
+            if (trade.account == "" && accounts.length > 0) {
                 onFieldChange("account", accounts[0]._id);
+            } else if (accounts.length == 0) {
+                setError("You must first create a platform and account");
+                return;
             }
             setAccounts(accounts as Account[]);
         });
@@ -104,6 +108,8 @@ export default function AddTrade() {
             console.log("Trade added");
         });
     }
+
+    if (error) return <div>{error}</div>;
 
     return <Form>
         <Grid>

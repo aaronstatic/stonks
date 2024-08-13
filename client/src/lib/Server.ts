@@ -156,4 +156,12 @@ export default class Server {
         });
     }
 
+    static async getSession(sessionId: string): Promise<{ userData: { id: string, currency: string }, sessionId: string }> {
+        return new Promise((resolve) => {
+            this.call('get-session', { sessionId }).then((data) => {
+                resolve(data);
+            });
+        });
+    }
+
 }
