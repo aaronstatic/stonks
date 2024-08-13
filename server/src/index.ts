@@ -11,12 +11,14 @@ import getObject from "./api/get-object";
 import queryObjects from "./api/query-objects";
 import getReport from "./api/get-report";
 import queryDatabase from "./api/query-database";
+import getPortfolios from "./api/get-portfolios";
 
 import { DiscordBot } from "./lib/discord";
 import addTrade from "./api/add-trade";
 
 import db from "./lib/mongo";
 import { ObjectId } from "mongodb";
+import addPortfolio from "./api/add-portfolio";
 
 const discord = new DiscordBot();
 
@@ -173,26 +175,42 @@ const methods: { [key: string]: Method } = {
     "query-objects": queryObjects,
     "query-database": queryDatabase,
     "get-report": getReport,
-    "add-trade": addTrade
+    "add-trade": addTrade,
+    "get-portfolios": getPortfolios,
+    "add-portfolio": addPortfolio
 };
 
 const connectedSessions: { [key: string]: any } = {};
+
+const userMethods: string[] = [
+    "get-portfolios",
+    "add-portfolio"
+];
 
 wss.on("connection", (ws) => {
     ws.on("error", (err) => console.error(err));
 
     //console.log("Total connected users: ", wss.clients.size);
 
-    let session: { _id: ObjectId } | null = null;
+    let session: { _id: ObjectId, currency: string, portfolioId: string } | null = null;
+    let sessionId = "";
 
     ws.on("message", async (data) => {
         const message = JSON.parse(data.toString());
 
         if (message.method === "get-session") {
             connectedSessions[message.data.sessionId] = ws;
+            sessionId = message.data.sessionId;
             const sesh = await db.collection('user-sessions').findOne({ sessionId: message.data.sessionId });
             if (sesh) {
-                session = await db.collection('users').findOne({ id: sesh.id });
+                const user = await db.collection('users').findOne({ id: sesh.id });
+                if (user) {
+                    session = {
+                        _id: user._id,
+                        portfolioId: sesh.portfolioId || "default",
+                        currency: sesh.portfolioId == "default" ? user.currency : "USD"
+                    }
+                }
             }
 
             let result = null;
@@ -215,10 +233,43 @@ wss.on("connection", (ws) => {
             return;
         }
 
+        if (message.method === "set-portfolio") {
+            if (!session) return;
+            session.portfolioId = message.data.portfolioId;
+            if (session.portfolioId == "default") {
+                const user = await db.collection('users').findOne({ _id: session._id });
+                if (user) {
+                    session.currency = user.currency;
+                }
+            } else {
+                session.currency = "USD";
+            }
+
+            await db.collection('user-sessions').findOneAndUpdate({
+                sessionId: sessionId
+            }, {
+                $set: {
+                    portfolioId: message.data.portfolioId
+                }
+            });
+            ws.send(JSON.stringify({
+                id: message.id,
+                result: true
+            }));
+            ws.send(JSON.stringify({
+                msg: "update-userdata",
+                data: session
+            }));
+            return;
+        }
+
         //console.log("Message received: ", message);
 
         if (!session) return;
-        const userid = session._id.toString();
+        let userid = session._id.toString();
+        if (session.portfolioId != "default" && !userMethods.includes(message.method)) {
+            userid = session.portfolioId;
+        }
 
         if (methods[message.method]) {
             methods[message.method]({

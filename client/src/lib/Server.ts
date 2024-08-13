@@ -33,6 +33,11 @@ export default class Server {
         this.ws.onmessage = (event) => {
             const message = JSON.parse(event.data.toString());
 
+            if (!message.id && message.msg) {
+                this.emit(message.msg, message.data);
+                return;
+            }
+
             if (callbacks[message.id]) {
                 callbacks[message.id](message.result);
                 delete callbacks[message.id];
@@ -156,10 +161,34 @@ export default class Server {
         });
     }
 
-    static async getSession(sessionId: string): Promise<{ userData: { id: string, currency: string }, sessionId: string }> {
+    static async getSession(sessionId: string): Promise<{ userData: { id: string, currency: string, portfolioId: string }, sessionId: string }> {
         return new Promise((resolve) => {
             this.call('get-session', { sessionId }).then((data) => {
                 resolve(data);
+            });
+        });
+    }
+
+    static async getPortfolios(): Promise<{ name: string, id: string }[]> {
+        return new Promise((resolve) => {
+            this.call('get-portfolios', {}).then((data) => {
+                resolve(data);
+            });
+        });
+    }
+
+    static async setPortfolio(portfolioId: string): Promise<boolean> {
+        return new Promise((resolve) => {
+            this.call('set-portfolio', { portfolioId }).then((result: boolean) => {
+                resolve(result);
+            });
+        });
+    }
+
+    static async addPortfolio(name: string): Promise<{ name: string, _id: string }> {
+        return new Promise((resolve) => {
+            this.call('add-portfolio', { name }).then((result: { name: string, _id: string }) => {
+                resolve(result);
             });
         });
     }

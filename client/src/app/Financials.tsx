@@ -116,6 +116,7 @@ export default function Financials({ ticker, tickerDetails }: { ticker: string, 
     const netIncome = [];
 
     for (const item of financials.time_series) {
+        if (!item.basicEPS && !item.netIncome) continue;
         let basicEPS = 0;
         let net = 0;
         if (item.basicEPS) {
@@ -147,7 +148,7 @@ export default function Financials({ ticker, tickerDetails }: { ticker: string, 
 
     return (
         <>
-            <CompanyName>[{ticker}] {financials.company_name}</CompanyName>
+            <CompanyName>[{ticker}] {tickerDetails.name}</CompanyName>
             <FinancialsStats>
                 <FinancialsStat>
                     <StatLabel>Start Date</StatLabel>

@@ -146,6 +146,7 @@ export const ItemData = createContext<WindowData | null>(null);
 export const UserData = createContext<{
   id: string;
   currency: string;
+  portfolioId: string;
 } | null>(null);
 
 type AppState = {
@@ -153,6 +154,7 @@ type AppState = {
   userData: {
     id: string;
     currency: string;
+    portfolioId: string;
   } | null;
 }
 
@@ -180,6 +182,16 @@ class App extends React.Component<any, AppState> {
     });
     //check cookie for session Id
 
+    Server.on("update-userdata", (data: any) => {
+      if (data.portfolioId != this.state.userData?.portfolioId) {
+        //refresh
+        window.location.reload();
+      }
+      this.setState({
+        userData: data
+      });
+    });
+
     function getCookie(name: string) {
       const value = `; ${document.cookie}`;
       const parts = value.split(`; ${name}=`);
@@ -190,7 +202,6 @@ class App extends React.Component<any, AppState> {
 
     if (sessionId) {
       Server.getSession(sessionId).then((data) => {
-        console.log(data);
         if (!data.userData || data.userData.id == "") {
           redirectLogin();
           return;
