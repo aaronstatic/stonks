@@ -17,7 +17,7 @@ export default async function updateGamma(): Promise<boolean> {
     //only do this once a day at 8:30am NY time
     const now = DateTime.now().setZone("America/New_York");
     if (now.weekday > 5) return true;
-    if (now.hour == 8 && now.minute > 25 && now.minute < 35) {
+    if (now.hour == 8 && now.minute > 25 && now.minute < 40) {
         await reportGammaChart("SPY");
         await reportGamma("SPY");
         await reportGammaChart("QQQ");
@@ -31,25 +31,25 @@ export default async function updateGamma(): Promise<boolean> {
                 await sendToDiscord({
                     channel: "macro",
                     cmd: "msg",
-                    message: `🔴 VIX is at ${vixLevel}, expect extreme volatility`
+                    message: `🔴 VIX is at ${vixLevel.toFixed(2)}, expect extreme volatility`
                 });
             } else if (vixLevel > 30) {
                 await sendToDiscord({
                     channel: "macro",
                     cmd: "msg",
-                    message: `🔴 VIX is at ${vixLevel}, expect high volatility`
+                    message: `🔴 VIX is at ${vixLevel.toFixed(2)}, expect high volatility`
                 });
             } else if (vixLevel > 20) {
                 await sendToDiscord({
                     channel: "macro",
                     cmd: "msg",
-                    message: `🟡 VIX is at ${vixLevel}, expect moderate volatility`
+                    message: `🟡 VIX is at ${vixLevel.toFixed(2)}, expect moderate volatility`
                 });
             } else {
                 await sendToDiscord({
                     channel: "macro",
                     cmd: "msg",
-                    message: `🟢 VIX is at ${vixLevel}, expect low volatility`
+                    message: `🟢 VIX is at ${vixLevel.toFixed(2)}, expect low volatility`
                 });
             }
         }

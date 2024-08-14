@@ -1,6 +1,7 @@
 import type Object from '@schema/object';
 import Trade from '@schema/trade';
 import Option from '@schema/option';
+import { User } from '@schema/user';
 
 const callbacks: { [id: string]: Function } = {};
 
@@ -161,7 +162,7 @@ export default class Server {
         });
     }
 
-    static async getSession(sessionId: string): Promise<{ userData: { id: string, currency: string, portfolioId: string }, sessionId: string }> {
+    static async getSession(sessionId: string): Promise<{ userData: User, sessionId: string }> {
         return new Promise((resolve) => {
             this.call('get-session', { sessionId }).then((data) => {
                 resolve(data);

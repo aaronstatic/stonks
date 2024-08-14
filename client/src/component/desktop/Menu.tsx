@@ -1,4 +1,4 @@
-import { Button, Form, HStack, Input, Nav, SelectPicker, Sidenav } from "rsuite";
+import { Avatar, Button, Form, HStack, Input, Nav, SelectPicker, Sidenav } from "rsuite";
 import { MenuItem, UserData } from "../../App";
 import styled from "styled-components";
 import { useContext, useEffect, useState } from "react";
@@ -17,6 +17,16 @@ const Logo = styled.img`
 const AddButton = styled(Button)`
     margin-left: 5px;
     margin-right: 20px;
+`
+
+const Footer = styled.div`
+    margin-top: auto;
+    padding: 20px;
+`
+
+const Username = styled.div`
+    margin-left: 10px;
+    color: var(--rs-sidenav-subtle-text);
 `
 
 interface MenuProps {
@@ -44,7 +54,7 @@ export default function Menu({ items, onClick }: MenuProps) {
             </Sidenav.Header>
             <Sidenav expanded={true} appearance="subtle">
                 <Sidenav.Body>
-                    <HStack style={{ marginLeft: 20 }}>
+                    <HStack justifyContent="center">
                         {portfolios.length > 0 && (
                             <SelectPicker
                                 cleanable={false}
@@ -67,7 +77,7 @@ export default function Menu({ items, onClick }: MenuProps) {
                             add
                         </AddButton>
                     </HStack>
-                    <Nav>
+                    <Nav style={{ marginTop: 20 }}>
                         {items.map(item => (
                             <Nav.Item key={item.id} onClick={() => onClick(item.id, item.id)}>
                                 <Icon className="material-symbols-outlined">
@@ -79,6 +89,12 @@ export default function Menu({ items, onClick }: MenuProps) {
                     </Nav>
                 </Sidenav.Body>
             </Sidenav>
+            <Footer>
+                <HStack justifyContent="center">
+                    <Avatar color="green" src={userData.avatar} circle />
+                    <Username>{userData.name}</Username>
+                </HStack>
+            </Footer>
             <Popup
                 title="Add Portfolio"
                 onOK={() => {

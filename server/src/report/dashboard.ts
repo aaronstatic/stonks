@@ -67,7 +67,6 @@ export default async function dashboard(owner: string = "", params: any = {}): P
     const openOptions = await getOpenOptions(owner, toDate);
 
     for (const option of openOptions) {
-        console.log(option.name);
         const report = await holdingReport(owner, { ticker: option._id.toString(), type: "Option", toDate: toDate });
         if (report) {
             totalValue += report.value;

@@ -19,6 +19,7 @@ import addTrade from "./api/add-trade";
 import db from "./lib/mongo";
 import { ObjectId } from "mongodb";
 import addPortfolio from "./api/add-portfolio";
+import { User } from "@schema/user";
 
 const discord = new DiscordBot();
 
@@ -192,7 +193,7 @@ wss.on("connection", (ws) => {
 
     //console.log("Total connected users: ", wss.clients.size);
 
-    let session: { _id: ObjectId, currency: string, portfolioId: string } | null = null;
+    let session: User | null = null;
     let sessionId = "";
 
     ws.on("message", async (data) => {
@@ -206,9 +207,12 @@ wss.on("connection", (ws) => {
                 const user = await db.collection('users').findOne({ id: sesh.id });
                 if (user) {
                     session = {
-                        _id: user._id,
+                        id: user._id.toString(),
                         portfolioId: sesh.portfolioId || "default",
-                        currency: sesh.portfolioId == "default" ? user.currency : "USD"
+                        currency: sesh.portfolioId == "default" ? user.currency : "USD",
+                        username: user.username,
+                        avatar: `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`,
+                        name: user.global_name
                     }
                 }
             }
@@ -221,8 +225,11 @@ wss.on("connection", (ws) => {
             } else {
                 result = {
                     userData: {
-                        id: "",
-                        currency: ""
+                        _id: "",
+                        currency: "",
+                        portfolioId: "",
+                        name: "",
+                        avatar: ""
                     }
                 }
             }
@@ -237,7 +244,7 @@ wss.on("connection", (ws) => {
             if (!session) return;
             session.portfolioId = message.data.portfolioId;
             if (session.portfolioId == "default") {
-                const user = await db.collection('users').findOne({ _id: session._id });
+                const user = await db.collection('users').findOne({ _id: new ObjectId(session.id) });
                 if (user) {
                     session.currency = user.currency;
                 }
@@ -266,7 +273,7 @@ wss.on("connection", (ws) => {
         //console.log("Message received: ", message);
 
         if (!session) return;
-        let userid = session._id.toString();
+        let userid = session.id.toString();
         if (session.portfolioId != "default" && !userMethods.includes(message.method)) {
             userid = session.portfolioId;
         }

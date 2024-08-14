@@ -7,7 +7,7 @@ import { getExchangeRate } from "../lib/currency";
 import { getDayChange, getNextExpiryGammaZone, getStockDayCandle, getStockPrice, sortEvent } from "../lib/stocks";
 import Option from "@schema/option";
 import { castHolding, getHolding } from "../lib/holdings";
-import { castOption, getOpenOptionQuantity, getOpenOptionSnapshot, getOptionDayCandle, getOptionDayChange, getOptionPrice } from "../lib/options";
+import { castOption, getOpenOptionQuantity, getOpenOptionSnapshot, getOptionDayCandle, getOptionDayChange, getOptionPrice, getOptionTicker } from "../lib/options";
 import { ObjectId } from "mongodb";
 
 export default async function holdingReport(owner: string = "", params: any = {}): Promise<HoldingReport | null> {
@@ -30,7 +30,6 @@ export default async function holdingReport(owner: string = "", params: any = {}
             return await cryptoHolding(holding, toDateDT);
         }
     } else {
-        console.log(ticker);
         const doc = await db.collection('option').findOne({ owner: owner, _id: new ObjectId(ticker) });
         if (doc == null) {
             return null;
@@ -305,8 +304,11 @@ async function optionHolding(option: Option, toDateDT: DateTime): Promise<Holdin
     let realized = 0;
     let realizedfy = 0;
 
-    const todayCandle = await getOptionDayCandle(option._id, toDateDT.toISODate() || "", false);
-    if (!todayCandle) {
+    //if there are no candles at all
+    const ticker = await getOptionTicker(option._id);
+    const candles = await db.collection('options-1d').find({ ticker: ticker }).toArray();
+
+    if (candles.length == 0) {
         const { qty, avgPrice } = await getOpenOptionSnapshot(option._id);
         return {
             name: name,
@@ -334,6 +336,17 @@ async function optionHolding(option: Option, toDateDT: DateTime): Promise<Holdin
         }
     }
 
+    let todayCandle = await getOptionDayCandle(option._id, toDateDT.toISODate() || "", false);
+    if (!todayCandle) {
+        const { qty, avgPrice } = await getOpenOptionSnapshot(option._id);
+        todayCandle = {
+            open: avgPrice / 100,
+            close: avgPrice / 100,
+            high: avgPrice / 100,
+            low: avgPrice / 100
+        }
+    }
+
     const startOfDay = toDateDT.toUTC().startOf('day');
     const endOfDay = startOfDay.endOf('day');
     let startOfFinancialYear = toDateDT.minus({ years: 1 }).set({ month: 7, day: 1 }).startOf('day');
@@ -356,21 +369,28 @@ async function optionHolding(option: Option, toDateDT: DateTime): Promise<Holdin
             }
             realized += (trade.price * trade.quantity) - (averageOpenPrice * trade.quantity);
             quantity -= trade.quantity;
-            cost -= (averageOpenPrice * trade.quantity);
+            if (quantity < 0) {
+                cost += (trade.price * trade.quantity) + (trade.fees / 100);
+            } else {
+                cost -= (averageOpenPrice * trade.quantity);
+            }
             if (time > startOfDay && time < endOfDay) {
                 const sinceChange = trade.price - todayCandle.open;
                 today += trade.quantity * sinceChange;
             }
         }
-        if (quantity > 0)
+        if (quantity != 0)
             averageOpenPrice = cost / quantity;
         else
             averageOpenPrice = 0;
     }
 
-
+    if (quantity < 0) {
+        averageOpenPrice = -averageOpenPrice;
+    }
 
     let price = await getOptionPrice(option._id, toDateDT.toISODate() || "");
+    if (quantity < 0) price = -price;
 
     today += quantity * dayChange * 100;
 
@@ -378,8 +398,9 @@ async function optionHolding(option: Option, toDateDT: DateTime): Promise<Holdin
 
     let valueMainCurrency = 0;
     let costMainCurrency = 0;
-    const value = quantity * price * 100;
+    const value = quantity * Math.abs(price) * 100;
     let unrealized = value - cost * 100;
+    if (quantity < 0) unrealized = value + cost * 100;
 
     const user = await db.collection('users').findOne({
         _id: new ObjectId(holding.owner)

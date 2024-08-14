@@ -16,6 +16,7 @@ import AddTrade from './app/AddTrade'
 import Watchlist from './app/Watchlist'
 import WatchlistItemReport from './app/WatchlistItem'
 import Index from './report/Index'
+import { User } from '@schema/user'
 
 type WindowData = {
   id: string;
@@ -132,6 +133,9 @@ const menuItems: MenuItem[] = [
 const MenuWrap = styled(Sidebar)`
   background-color: var(--rs-gray-800);
   height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
 `
 
 const defaultWindows: { [id: string]: WindowData } = {};
@@ -143,19 +147,11 @@ export const Windows = createContext<WindowAPI>({
 });
 export const ItemData = createContext<WindowData | null>(null);
 
-export const UserData = createContext<{
-  id: string;
-  currency: string;
-  portfolioId: string;
-} | null>(null);
+export const UserData = createContext<User | null>(null);
 
 type AppState = {
   windows: { [id: string]: WindowData };
-  userData: {
-    id: string;
-    currency: string;
-    portfolioId: string;
-  } | null;
+  userData: User | null;
 }
 
 class App extends React.Component<any, AppState> {
