@@ -38,6 +38,14 @@ class CRUDTable extends CRUD {
                     this.onOpen(id);
                 }
             }}>
+                <Table.Column width={80}>
+                    <Table.HeaderCell>&nbsp;</Table.HeaderCell>
+                    <Table.Cell>
+                        {rowData => (
+                            <Button size="xs" onClick={() => this.onOpen(rowData._id)}>Open</Button>
+                        )}
+                    </Table.Cell>
+                </Table.Column>
                 {this.renderColumns()}
                 <Table.Column width={130}>
                     <Table.HeaderCell>...</Table.HeaderCell>

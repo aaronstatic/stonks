@@ -7,9 +7,19 @@
   z-index: 2147483647 !important;
 }
 
+
+.rs-container-has-sidebar header.mobile-menu {
+  display: none;
+}
+
+
 @media (max-width: 900px) {
-  .rs-container-has-sidebar .rs-sidebar {
+  .rs-container-has-sidebar .rs-sidebar.desktop-menu {
     display: none;
+  }
+
+  .rs-container-has-sidebar header.mobile-menu {
+    display: block;
   }
 
   .rs-content {

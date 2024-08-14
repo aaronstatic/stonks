@@ -4,7 +4,7 @@ import React, { createContext } from 'react'
 import Platforms from './app/Platforms'
 import Server from './lib/Server'
 import Accounts from './app/Accounts'
-import { Container, Content, Loader, Sidebar } from 'rsuite'
+import { Container, Content, Header, Loader, Sidebar } from 'rsuite'
 import Menu from './component/desktop/Menu'
 import styled from 'styled-components'
 import Account from './app/Account'
@@ -130,12 +130,27 @@ const menuItems: MenuItem[] = [
   }
 ]
 
-const MenuWrap = styled(Sidebar)`
+const DesktopMenu = styled(Sidebar)`
   background-color: var(--rs-gray-800);
   height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: stretch;
+`
+
+const MobileMenu = styled(Header)`
+  background-color: var(--rs-gray-800);
+  height: 50px;
+`
+
+const MobileContent = styled.div`
+  padding: 5px;
+`
+
+
+const Scroller = styled.div`
+  overflow-y: auto;
+  height: calc(100vh - 50px);
 `
 
 const defaultWindows: { [id: string]: WindowData } = {};
@@ -152,6 +167,7 @@ export const UserData = createContext<User | null>(null);
 type AppState = {
   windows: { [id: string]: WindowData };
   userData: User | null;
+  currentScreen: WindowData | null;
 }
 
 class App extends React.Component<any, AppState> {
@@ -159,7 +175,8 @@ class App extends React.Component<any, AppState> {
     super(props);
     this.state = {
       windows: defaultWindows,
-      userData: null
+      userData: null,
+      currentScreen: null
     };
   }
 
@@ -174,7 +191,11 @@ class App extends React.Component<any, AppState> {
     Server.init();
     Server.on("open-object", (data: any) => {
       const type = TypeApplications[data.type];
-      this.openWindow(type, data.id, data.subType);
+      if (this.state.currentScreen) {
+        this.openScreen(type, data.id, data.subType);
+      } else {
+        this.openWindow(type, data.id, data.subType);
+      }
     });
     //check cookie for session Id
 
@@ -233,6 +254,31 @@ class App extends React.Component<any, AppState> {
     });
   }
 
+  openScreen = (type: string, id: string = "", subType: string = ""): void => {
+    const { currentScreen } = this.state;
+    if (id === "dashboard") {
+      this.setState({
+        currentScreen: null
+      });
+      return;
+    }
+    if (id === "") {
+      id = "win-" + Math.random().toString(16).slice(2);
+    }
+    if (currentScreen && currentScreen.id === id) {
+      return;
+    }
+    this.setState({
+      currentScreen: {
+        id,
+        zIndex: 0,
+        type,
+        subType
+      }
+    });
+  }
+
+
   closeWindow = (id: string): void => {
     const { windows } = this.state;
     const newWindows = { ...windows };
@@ -247,6 +293,11 @@ class App extends React.Component<any, AppState> {
       return <Loader size="lg" center />
     }
 
+    let Screen = null;
+    if (this.state.currentScreen) {
+      Screen = Applications[this.state.currentScreen.type];
+    }
+
     return (
       <UserData.Provider value={userData}>
         <Windows.Provider value={{
@@ -255,30 +306,46 @@ class App extends React.Component<any, AppState> {
           windows
         }}>
           <Container>
-            <MenuWrap>
+            <DesktopMenu className="desktop-menu">
               <Menu items={menuItems} onClick={this.openWindow} />
-            </MenuWrap>
+            </DesktopMenu>
             <Content>
-              <Dashboard />
-              {Object.keys(windows).map((id) => {
-                const win = windows[id];
-                const App = Applications[win.type];
-                const defaultSize = {
-                  width: 400,
-                  height: 300
-                }
-                if (win.type in DefaultSizes) {
-                  defaultSize.width = DefaultSizes[win.type].width;
-                  defaultSize.height = DefaultSizes[win.type].height;
-                }
-                return (
-                  <Window defaultSize={defaultSize} key={id} title={win.type} windowId={id} >
-                    <ItemData.Provider value={win}>
-                      <App />
+              <MobileMenu className="mobile-menu">
+                <Menu mobile items={menuItems} onClick={this.openScreen} />
+              </MobileMenu>
+              <Scroller>
+                {this.state.currentScreen && Screen && (
+                  <MobileContent>
+                    <ItemData.Provider value={this.state.currentScreen}>
+                      <Screen />
                     </ItemData.Provider>
-                  </Window>
-                )
-              })}
+                  </MobileContent>
+                )}
+                {!this.state.currentScreen && (
+                  <>
+                    <Dashboard />
+                    {Object.keys(windows).map((id) => {
+                      const win = windows[id];
+                      const App = Applications[win.type];
+                      const defaultSize = {
+                        width: 400,
+                        height: 300
+                      }
+                      if (win.type in DefaultSizes) {
+                        defaultSize.width = DefaultSizes[win.type].width;
+                        defaultSize.height = DefaultSizes[win.type].height;
+                      }
+                      return (
+                        <Window defaultSize={defaultSize} key={id} title={win.type} windowId={id} >
+                          <ItemData.Provider value={win}>
+                            <App />
+                          </ItemData.Provider>
+                        </Window>
+                      )
+                    })}
+                  </>
+                )}
+              </Scroller>
             </Content>
           </Container>
         </Windows.Provider>

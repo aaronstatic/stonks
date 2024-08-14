@@ -29,6 +29,9 @@ const Title = styled.h4`
 const Logo = styled.img`
     width: 200px;
     margin-bottom: 1rem;
+    @media (max-width: 900px) {
+        width: 50px;
+    }
 `
 
 const Description = styled.p`
