@@ -7,6 +7,7 @@ class Platforms extends CRUDList {
         width: 400,
         height: 400
     }
+    showOpenButton = false;
 }
 
 export default Platforms;

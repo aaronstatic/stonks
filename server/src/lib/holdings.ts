@@ -22,3 +22,7 @@ export function getHolding(id: string): Promise<Holding> {
 export async function getAllHoldings(owner: string): Promise<Holding[]> {
     return await db.collection('holding').find({ owner }).map(castHolding).toArray();
 }
+
+export async function getHoldingByTicker(owner: string, ticker: string): Promise<Holding> {
+    return db.collection('holding').findOne({ owner, ticker }).then(castHolding);
+}

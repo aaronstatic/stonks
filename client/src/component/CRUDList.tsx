@@ -13,6 +13,7 @@ const Name = styled(FlexboxGrid.Item)`
 
 const ButtonContainer = styled(FlexboxGrid.Item)`
     margin-left: 2px;
+    margin-right: 5px;
 `;
 
 class CRUDList extends CRUD {
@@ -22,7 +23,7 @@ class CRUDList extends CRUD {
 
     renderItem(item: Object) {
         return (
-            <Name colspan={15}>
+            <Name colspan={12}>
                 {this.getName(item)}
             </Name>
         )
@@ -35,6 +36,11 @@ class CRUDList extends CRUD {
                 {data.map((item) => (
                     <Item key={item._id} onDoubleClick={() => { this.onOpen(item._id) }}>
                         <FlexboxGrid>
+                            {this.showOpenButton && (
+                                <ButtonContainer>
+                                    <Button size="xs" onClick={() => this.onOpen(item._id)}>Open</Button>
+                                </ButtonContainer>
+                            )}
                             {this.renderItem(item)}
                             <ButtonContainer>
                                 <Button size="xs" onClick={() => {

@@ -35,6 +35,8 @@ class CRUD extends React.Component<any, CRUDState> {
 
     refreshOnChange: boolean = false;
 
+    showOpenButton: boolean = true;
+
     static defaultSize = {
         width: 400,
         height: 400

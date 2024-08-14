@@ -1,6 +1,7 @@
 // Require the necessary discord.js classes
-import { APIEmbed, Channel, Client, EmbedBuilder, GatewayIntentBits, TextChannel } from 'discord.js';
-
+import { Collection, Channel, Client, EmbedBuilder, GatewayIntentBits, TextChannel, Events } from 'discord.js';
+import fs from 'fs';
+import path from 'node:path';
 import { WebSocket, WebSocketServer } from 'ws';
 
 interface ChannelMap {
@@ -33,7 +34,47 @@ export class DiscordBot {
         console.log("Starting discord bot");
 
         // Create a new discord client instance
-        const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+        const client = new Client({ intents: [GatewayIntentBits.Guilds] }) as any;
+
+        client.commands = new Collection();
+
+        console.log(__dirname);
+        const foldersPath = path.join(__dirname, '..', 'commands');
+        const commandFolders = fs.readdirSync(foldersPath);
+
+        for (const folder of commandFolders) {
+            const commandsPath = path.join(foldersPath, folder);
+            const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+            for (const file of commandFiles) {
+                const filePath = path.join(commandsPath, file);
+                const command = require(filePath);
+                // Set a new item in the Collection with the key as the command name and the value as the exported module
+                if ('data' in command && 'execute' in command) {
+                    client.commands.set(command.data.name, command);
+                } else {
+                    console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
+                }
+            }
+        }
+
+        client.on(Events.InteractionCreate, async (interaction: any) => {
+            if (!interaction.isChatInputCommand()) return;
+
+            const command = client.commands.get(interaction.commandName);
+
+            if (!command) return;
+
+            try {
+                await command.execute(interaction);
+            } catch (error) {
+                console.error(error);
+                if (interaction.replied || interaction.deferred) {
+                    await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
+                } else {
+                    await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+                }
+            }
+        });
 
         const wss = new WebSocketServer({ port: 9090 });
         wss.on('connection', function connection(ws) {
