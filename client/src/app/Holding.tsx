@@ -39,7 +39,7 @@ const Description = styled.p`
     font-size: 0.8em;
 `
 
-export default function AccountView() {
+export default function HoldingView() {
     const [holding, setHolding] = useState<Holding | null>(null);
     const [holdingReport, setHoldingReport] = useState<HoldingReport | null>(null);
     const [details, setDetails] = useState<any>(null);

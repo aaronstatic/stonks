@@ -17,7 +17,7 @@ export default async function updateGamma(): Promise<boolean> {
     //only do this once a day at 8:30am NY time
     const now = DateTime.now().setZone("America/New_York");
     if (now.weekday > 5) return true;
-    if (now.hour == 8 && now.minute > 25 && now.minute < 40) {
+    if (now.hour == 8 && now.minute > 25 && now.minute < 44) {
         await reportGammaChart("SPY");
         await reportGamma("SPY");
         await reportGammaChart("QQQ");

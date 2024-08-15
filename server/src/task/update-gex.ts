@@ -11,7 +11,7 @@ export default async function updateGEX(): Promise<boolean> {
     const now = DateTime.now().setZone("America/New_York");
     if (now.weekday > 5) return true; //only run on weekdays
     if (now.hour < 8 || now.hour > 16) return true; //only run during market hours
-    if (now.minute < 25 || now.minute > 35) return true; //only run halfway through the hour
+    if (now.minute < 10 || now.minute > 25) return true; //only run halfway through the hour
 
     const tickers = ["SPY", "QQQ", "IWM", "DIA"];
     //add open holdings
@@ -224,8 +224,8 @@ async function updateGammaLevels(ticker: string, date: string): Promise<boolean>
         cumulativeDEX += data.DEX;
         data.gexProfile = cumulativeGEX;
         data.dexProfile = cumulativeDEX;
-        if (Math.abs(cumulativeGEX) > peakGEX) {
-            peakGEX = Math.abs(cumulativeGEX);
+        if (cumulativeGEX < peakGEX) {
+            peakGEX = cumulativeGEX;
             gammaFlipLevel = parseInt(strike);
         }
         allData.push({

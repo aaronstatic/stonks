@@ -10,4 +10,5 @@ export default interface OptionTrade extends Entity {
     transaction: string;
     fees: number;
     balance: number;
+    multi: string;
 }

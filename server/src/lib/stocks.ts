@@ -2,6 +2,7 @@ import Holding from '@schema/holding';
 import db from './mongo';
 import { DateTime } from 'luxon';
 import { castHolding } from './holdings';
+import polygon from './polygon';
 
 export function sortEvent(a: any, b: any): number {
     const A = DateTime.fromISO(a.timestamp);
@@ -50,9 +51,32 @@ export async function getOpenStockHoldings(owner: string = "", toDate: string = 
     return openHoldings;
 }
 
-export async function getStockPrice(ticker: string, date: string = ""): Promise<number> {
+export async function fetchStockPrice(ticker: string): Promise<number> {
+    const candles = await polygon.stocks.aggregates(
+        ticker,
+        1,
+        'day',
+        DateTime.now().minus({ days: 1 }).toMillis().toString(),
+        DateTime.now().toMillis().toString(),
+        { sort: 'desc' }
+    );
+    if (!candles) return 0;
+    if (!candles.results) return 0;
+    if (candles.results.length == 0) return 0;
+
+    const price = candles.results[0].c;
+
+    return price || 0;
+}
+
+export async function getStockPrice(ticker: string, date: string = "", fetch: boolean = false): Promise<number> {
     const candle = await getStockDayCandle(ticker, date);
-    if (!candle) return 0;
+    if (!candle) {
+        if (fetch) {
+            return await fetchStockPrice(ticker);
+        }
+        return 0;
+    }
     return candle.close;
 }
 
@@ -194,4 +218,26 @@ export async function getNextExpiryGammaZone(ticker: string): Promise<number> {
         return 1;
     }
     return 0;
+}
+
+export async function fetchStockName(ticker: string): Promise<string> {
+    const details = await polygon.reference.tickerDetails(ticker);
+    if (!details) return "";
+    if (!details.results) return "";
+    const name = details.results.name;
+    const collection = db.collection('stocks-detail');
+    await collection.insertOne({ ticker: ticker, ...details.results });
+    return name || "";
+}
+
+export async function getStockName(ticker: string, fetch: boolean = false): Promise<string> {
+    const collection = db.collection('stocks-detail');
+    const doc = await collection.findOne({ ticker: ticker });
+    if (!doc) {
+        if (fetch) {
+            return await fetchStockName(ticker);
+        }
+        return "";
+    }
+    return doc.name;
 }

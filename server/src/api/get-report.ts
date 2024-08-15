@@ -8,6 +8,7 @@ import { sectors } from "../report/sectors";
 import watchlist from "../report/watchlist";
 import dailyValue from "../report/daily-value";
 import gamma from "../report/gamma";
+import allTrades from "../report/all-trades";
 
 type ReportMap = {
     [key: string]: (owner: string, params: any) => Promise<any>
@@ -23,7 +24,8 @@ const reportMap: ReportMap = {
     'watchlist': watchlist,
     'indices': indicesReport,
     'sectors': sectors,
-    'gamma': gamma
+    'gamma': gamma,
+    'all-trades': allTrades
 }
 
 export default function getReport(data: { owner: string, type: string, params: any }): Promise<Object> {

@@ -18,6 +18,8 @@ import { ObjectId } from "mongodb";
 
 let tasks: { [name: string]: BaseTask } = {
     updateCalendar,
+    updateGEX,
+    updateGamma,
     updateExchangeRates,
     updateHoldings,
     updateStocks,
@@ -25,9 +27,7 @@ let tasks: { [name: string]: BaseTask } = {
     updateBybit,
     updateHistory,
     updateIndices,
-    updateOptions,
-    updateGEX,
-    updateGamma
+    updateOptions
 };
 
 let tasksToRun = [];

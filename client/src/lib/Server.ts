@@ -194,4 +194,28 @@ export default class Server {
         });
     }
 
+    static async getStockPrice(ticker: string): Promise<number> {
+        return new Promise((resolve) => {
+            this.call('get-stock-price', { ticker }).then((result: number) => {
+                resolve(result);
+            });
+        });
+    }
+
+    static async getCryptoPrice(ticker: string): Promise<number> {
+        return new Promise((resolve) => {
+            this.call('get-crypto-price', { ticker }).then((result: number) => {
+                resolve(result);
+            });
+        });
+    }
+
+    static async getStockName(ticker: string): Promise<string> {
+        return new Promise((resolve) => {
+            this.call('get-stock-name', { ticker }).then((result: string) => {
+                resolve(result);
+            });
+        });
+    }
+
 }

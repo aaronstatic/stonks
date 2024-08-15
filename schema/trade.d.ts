@@ -1,4 +1,5 @@
 import Event from './event';
+import Holding from './holding';
 
 export default interface Trade extends Event {
     type: string;
@@ -10,4 +11,7 @@ export default interface Trade extends Event {
     fees: number;
     qtyFees: number;
     balance: number;
+    holdingData?: Holding;
+    total?: number;
+    holdingType: string;
 }

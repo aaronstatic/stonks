@@ -5,6 +5,8 @@ import { ObjectId } from 'mongodb';
 import polygon from './polygon';
 import { DateTime } from 'luxon';
 import { getHolding } from './holdings';
+import Holding from '@schema/holding';
+import MultiLegOption from '@schema/multilegoption';
 
 export function castOption(doc: any): Option {
     return {
@@ -16,6 +18,33 @@ export function castOption(doc: any): Option {
         type: doc.type as string,
         expiry: doc.expiry as string
     };
+}
+
+export function castMultiLegOption(doc: any): MultiLegOption {
+    return {
+        _id: doc._id.toString(),
+        holding: doc.holding as string,
+        type: doc.type as string,
+        name: doc.name as string,
+        owner: doc.owner as string
+    };
+}
+
+export async function getOption(id: string): Promise<Option> {
+    const collection = db.collection('option');
+    const doc = await collection.findOne({ _id: new ObjectId(id) });
+    return castOption(doc);
+}
+
+export async function getMultiLegOption(id: string): Promise<MultiLegOption> {
+    const collection = db.collection('multilegoption');
+    const option = await collection.findOne({ _id: new ObjectId(id) });
+    return castMultiLegOption(option);
+}
+
+export function getOptionName(option: Option, holding: Holding): string {
+    const expiry = DateTime.fromISO(option.expiry).toFormat("d MMM");
+    return `${holding.ticker} ${option.strike}${option.type == "Put" ? "P" : "C"} ${expiry}`;
 }
 
 export async function getOpenOptions(owner: string = "", toDate: string = ""): Promise<Option[]> {
@@ -41,6 +70,47 @@ export async function getOpenOptions(owner: string = "", toDate: string = ""): P
         if (expiry < now) continue;
 
         let trades = await tradeCollection.find({ option: option._id }).toArray();
+
+        trades = trades.sort(sortEvent);
+
+        let quantity = 0;
+        for (const trade of trades) {
+            const tradeTimestamp = DateTime.fromISO(trade.timestamp).toUTC();
+            if (tradeTimestamp > toDateDT) {
+                break;
+            }
+            if (trade.type === 'BUY') {
+                quantity += trade.quantity;
+            } else {
+                quantity -= trade.quantity;
+            }
+        }
+        if (quantity != 0) {
+            openOptions.push(option);
+        }
+    }
+
+    return openOptions;
+}
+
+export async function getOpenMultiLegOptions(owner: string = "", toDate: string = ""): Promise<MultiLegOption[]> {
+    const collection = db.collection('multilegoption');
+    const tradeCollection = db.collection('multilegoptiontrade');
+    let options;
+    const openOptions = [];
+
+    const toDateDT = toDate ? DateTime.fromISO(toDate) : DateTime.now().setZone("UTC");
+
+    if (owner == "") {
+        options = await collection.find({}).toArray();
+    } else {
+        options = await collection.find({ owner: owner }).toArray();
+    }
+
+    for (const doc of options) {
+        const option = castMultiLegOption(doc);
+
+        let trades = await tradeCollection.find({ multi: option._id }).toArray();
 
         trades = trades.sort(sortEvent);
 

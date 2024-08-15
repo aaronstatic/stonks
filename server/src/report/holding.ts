@@ -7,7 +7,7 @@ import { getExchangeRate } from "../lib/currency";
 import { getDayChange, getNextExpiryGammaZone, getStockDayCandle, getStockPrice, sortEvent } from "../lib/stocks";
 import Option from "@schema/option";
 import { castHolding, getHolding } from "../lib/holdings";
-import { castOption, getOpenOptionQuantity, getOpenOptionSnapshot, getOptionDayCandle, getOptionDayChange, getOptionPrice, getOptionTicker } from "../lib/options";
+import { castOption, getOpenOptionQuantity, getOpenOptionSnapshot, getOptionDayCandle, getOptionDayChange, getOptionName, getOptionPrice, getOptionTicker } from "../lib/options";
 import { ObjectId } from "mongodb";
 
 export default async function holdingReport(owner: string = "", params: any = {}): Promise<HoldingReport | null> {
@@ -194,7 +194,8 @@ async function stockHolding(holding: Holding, toDateDT: DateTime): Promise<Holdi
         cost: costMainCurrency,
         nextEarnings: nextEarnings,
         nextEarningsTime: nextEarningsTime,
-        gamma: gammaZone || 0
+        gamma: gammaZone || 0,
+        multi: ""
     };
 }
 
@@ -284,7 +285,8 @@ async function cryptoHolding(holding: Holding, toDateDT: DateTime): Promise<Hold
         lastDividendAmount: 0,
         nextDividend: "",
         nextDividendAmount: 0,
-        gamma: 0
+        gamma: 0,
+        multi: ""
     }
 
 }
@@ -294,8 +296,7 @@ async function optionHolding(option: Option, toDateDT: DateTime): Promise<Holdin
     const trades = await db.collection('optiontrade').find({ option: option._id.toString() }).toArray();
     trades.sort(sortEvent);
 
-    const expiry = DateTime.fromISO(option.expiry).toFormat("d MMM");
-    const name = `${holding.ticker} ${option.strike}${option.type == "Call" ? "C" : "P"} ${expiry}`;
+    const name = getOptionName(option, holding);
 
     let quantity = 0;
     let cost = 0;
@@ -332,7 +333,8 @@ async function optionHolding(option: Option, toDateDT: DateTime): Promise<Holdin
             lastDividendAmount: 0,
             nextDividend: "",
             nextDividendAmount: 0,
-            gamma: 0
+            gamma: 0,
+            multi: ""
         }
     }
 
@@ -355,10 +357,14 @@ async function optionHolding(option: Option, toDateDT: DateTime): Promise<Holdin
 
     const dayChange = await getOptionDayChange(option._id, toDateDT.toISODate() || "");
 
+    let multi = "";
     for (const trade of trades) {
         const time = DateTime.fromISO(trade.timestamp);
         if (time > toDateDT) {
             break;
+        }
+        if (trade.multi) {
+            multi = trade.multi;
         }
         if (trade.type === 'BUY') {
             quantity += trade.quantity;
@@ -470,6 +476,7 @@ async function optionHolding(option: Option, toDateDT: DateTime): Promise<Holdin
         lastDividendAmount: 0,
         nextDividend: "",
         nextDividendAmount: 0,
-        gamma: gammaZone || 0
+        gamma: gammaZone || 0,
+        multi: multi
     };
 }

@@ -54,10 +54,12 @@ function HoldingTable({ data, userData, totalValue }: { data: HoldingReport[], u
     let smallColumnSize = 100;
     let mediumColumnSize = 150;
     let tinyColumnSize = 50;
+    let largeColumnSize = 200;
     if (width < 900) {
         smallColumnSize = 90;
         mediumColumnSize = 115;
         tinyColumnSize = 40;
+        largeColumnSize = 150;
     }
 
     return (
@@ -72,8 +74,8 @@ function HoldingTable({ data, userData, totalValue }: { data: HoldingReport[], u
                 Server.emit("open-object", { type: 'holding', id: id });
             }
         }}>
-            <Table.Column width={mediumColumnSize} align="center">
-                <Table.HeaderCell>Ticker</Table.HeaderCell>
+            <Table.Column width={largeColumnSize} align="center">
+                <Table.HeaderCell>Equity</Table.HeaderCell>
                 <Table.Cell dataKey="ticker" />
             </Table.Column>
             <Table.Column width={mediumColumnSize} align="center">
@@ -90,7 +92,7 @@ function HoldingTable({ data, userData, totalValue }: { data: HoldingReport[], u
                 <Table.HeaderCell>Today</Table.HeaderCell>
                 <Table.Cell>
                     {(rowData: HoldingReport) => (
-                        <span className={rowData.today == 0 ? "zero" : rowData.today > 0 ? "green" : "red"}>{thousands(rowData.today.toFixed(2))} {userData.currency} ({((rowData.today / (rowData.averageOpenPrice * rowData.openQuantity)) * 100).toFixed(2)}%)</span>
+                        <span className={rowData.today == 0 ? "zero" : rowData.today > 0 ? "green" : "red"}>{thousands(rowData.today.toFixed(2))} {userData.currency} ({((rowData.today / rowData.cost) * 100).toFixed(2)}%)</span>
                     )}
                 </Table.Cell>
             </Table.Column>

@@ -4,17 +4,36 @@ import styled from "styled-components";
 import { useContext, useEffect, useState } from "react";
 import Server from "../../lib/Server";
 import Popup from "../Popup";
+import Icon from "../Icon";
 
-const Icon = styled.span`
+const ButtonIcon = styled(Icon)`
+    font-size: 30px;
     margin-right: 10px;
     @media (max-width: 900px) {
         margin-right: 0;
     }
 `
 
+const ButtonText = styled.div`
+    vertical-align: top;
+    margin-top: 6px;
+    font-size: 15px;
+    display: inline-block;
+`
+
+const LogoText = styled.div`
+    font-size: 30px;
+    color: var(--rs-sidenav-text);
+    text-align: center;
+    margin-bottom: 10px;
+    font-family: "Bebas Neue", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+`
+
 const Logo = styled.img`
     width: 100px;
-    margin: 20px auto;
+    margin: 20px auto auto;
     display: flex;
     @media (max-width: 900px) {
         width: 30px;
@@ -25,6 +44,8 @@ const Logo = styled.img`
 const AddButton = styled(Button)`
     margin-left: 5px;
     margin-right: 20px;
+    font-size: 20px;
+    padding: 5px;
 `
 
 const Footer = styled.div`
@@ -62,6 +83,7 @@ export default function Menu({ items, onClick, mobile }: MenuProps) {
                 <>
                     <Sidenav.Header>
                         <Logo src="/img/stonks-logo.png" alt="logo" />
+                        <LogoText>Stonks</LogoText>
                     </Sidenav.Header>
                     <Sidenav expanded={true} appearance="subtle">
                         <Sidenav.Body>
@@ -80,7 +102,7 @@ export default function Menu({ items, onClick, mobile }: MenuProps) {
                                     />
                                 )}
 
-                                <AddButton className="material-symbols-outlined" size="xs" onClick={() => {
+                                <AddButton className="material-symbols-outlined" size="md" onClick={() => {
                                     //add a portfolio, popup for name
                                     setShowAddPortfolio(true);
 
@@ -91,10 +113,8 @@ export default function Menu({ items, onClick, mobile }: MenuProps) {
                             <Nav style={{ marginTop: 20 }}>
                                 {items.map(item => (
                                     <Nav.Item key={item.id} onClick={() => onClick(item.id, item.id)}>
-                                        <Icon className="material-symbols-outlined">
-                                            {item.icon}
-                                        </Icon>
-                                        {item.title}
+                                        <ButtonIcon name={item.icon} />
+                                        <ButtonText>{item.title}</ButtonText>
                                     </Nav.Item>
                                 ))}
                             </Nav>
@@ -114,9 +134,7 @@ export default function Menu({ items, onClick, mobile }: MenuProps) {
                         <Logo onClick={() => onClick("dashboard", "dashboard")} src="/img/stonks-logo.png" alt="logo" />
                         {items.map(item => (
                             <Nav.Item key={item.id} onClick={() => onClick(item.id, item.id)}>
-                                <Icon className="material-symbols-outlined">
-                                    {item.icon}
-                                </Icon>
+                                <ButtonIcon name={item.icon} />
                             </Nav.Item>
                         ))}
                     </Nav>

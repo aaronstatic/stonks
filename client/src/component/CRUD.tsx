@@ -3,6 +3,8 @@ import { Button } from "rsuite";
 import Server from "../lib/Server";
 import Popup from "./Popup";
 import Object from "@schema/object";
+import Icon from "./Icon";
+import styled from "styled-components";
 
 export interface CRUDState {
     showPopup: boolean;
@@ -10,6 +12,10 @@ export interface CRUDState {
     data: Object[];
     filter: any;
 }
+
+const ButtonIcon = styled(Icon)`
+    margin-right: 5px;
+`
 
 class CRUD extends React.Component<any, CRUDState> {
 
@@ -147,11 +153,14 @@ class CRUD extends React.Component<any, CRUDState> {
 
         return (
             <>
-                <Button size="xs" color="green" onClick={() => {
+                <Button size="md" color="green" onClick={() => {
                     const newObject = { ...this.defaultValues };
                     this.setSelectedObject(newObject);
                     this.setShowPopup(true);
-                }}>Add New {this.displayName}</Button>
+                }}>
+                    <ButtonIcon name="add" />
+                    Add New {this.displayName}
+                </Button>
                 <br /><br />
                 {this.renderData()}
                 <Popup

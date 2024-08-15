@@ -17,6 +17,7 @@ import Watchlist from './app/Watchlist'
 import WatchlistItemReport from './app/WatchlistItem'
 import Index from './report/Index'
 import { User } from '@schema/user'
+import AllTrades from './app/AllTrades'
 
 type WindowData = {
   id: string;
@@ -53,7 +54,8 @@ const Applications: ApplicationMap = {
   AddTrade,
   Watchlist,
   WatchlistItemReport,
-  Index
+  Index,
+  AllTrades
 }
 
 const TypeApplications: TypeMap = {
@@ -92,6 +94,10 @@ const DefaultSizes: SizeMap = {
   "Watchlist": {
     width: 890,
     height: 600
+  },
+  "AllTrades": {
+    width: 930,
+    height: 730
   }
 }
 
@@ -119,9 +125,9 @@ const menuItems: MenuItem[] = [
     icon: "account_balance"
   },
   {
-    id: "AddTrade",
-    title: "Add Trade",
-    icon: "add_shopping_cart"
+    id: "AllTrades",
+    title: "Trades",
+    icon: "shopping_cart"
   },
   {
     id: "Watchlist",

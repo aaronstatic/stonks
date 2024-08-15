@@ -21,4 +21,5 @@ export type HoldingReport = {
     nextDividend: string
     nextDividendAmount: number
     gamma: number
+    multi: string
 }

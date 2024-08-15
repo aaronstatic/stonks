@@ -3,13 +3,14 @@ import { getOpenCryptoHoldings } from "../lib/crypto";
 import { getOpenStockHoldings, sortEvent } from "../lib/stocks"
 import { HoldingReport } from "@schema/report/holding"
 import { DashboardReport } from "@schema/report/dashboard"
-import { getOpenOptions } from "../lib/options";
+import { getMultiLegOption, getOpenOptions } from "../lib/options";
 
 import holdingReport from "./holding";
 import { getAllHoldings } from "../lib/holdings";
 import db from "../lib/mongo";
 import { DateTime } from "luxon";
 import { ObjectId } from "mongodb";
+import MultiLegOption from "@schema/multilegoption";
 
 export default async function dashboard(owner: string = "", params: any = {}): Promise<DashboardReport> {
     let toDate = params.toDate || "";
@@ -66,6 +67,9 @@ export default async function dashboard(owner: string = "", params: any = {}): P
 
     const openOptions = await getOpenOptions(owner, toDate);
 
+    const multilegs: { [key: string]: MultiLegOption } = {};
+    const legs: { [key: string]: HoldingReport[] } = {};
+
     for (const option of openOptions) {
         const report = await holdingReport(owner, { ticker: option._id.toString(), type: "Option", toDate: toDate });
         if (report) {
@@ -77,8 +81,66 @@ export default async function dashboard(owner: string = "", params: any = {}): P
                 distribution["Options"] = 0;
             }
             distribution["Options"] += report.value;
-            holdings.push(report);
+
+            if (report.multi) {
+                if (!multilegs[report.multi]) {
+                    multilegs[report.multi] = await getMultiLegOption(report.multi);
+                    legs[report.multi] = [];
+                }
+                legs[report.multi].push(report);
+            } else {
+                holdings.push(report);
+            }
         }
+    }
+
+    for (const multi in multilegs) {
+        const multitrades = await db.collection('multilegoptiontrade').find({ multi: multi }).toArray();
+        let quantity = 0;
+        for (const trade of multitrades) {
+            if (trade.type === 'BUY') {
+                quantity += trade.quantity;
+            } else {
+                quantity -= trade.quantity;
+            }
+        }
+        const report: HoldingReport = {
+            ticker: multilegs[multi].name,
+            name: multilegs[multi].name,
+            type: "Option",
+            risk: 0,
+            unrealized: 0,
+            realized: 0,
+            realizedfy: 0,
+            openQuantity: quantity,
+            averageOpenPrice: 0,
+            value: 0,
+            today: 0,
+            currency: legs[multi][0].currency,
+            id: multilegs[multi]._id,
+            lastPrice: 0,
+            cost: 0,
+            nextEarnings: legs[multi][0].nextEarnings,
+            nextEarningsTime: legs[multi][0].nextEarningsTime,
+            lastDividend: "",
+            lastDividendAmount: 0,
+            nextDividend: "",
+            nextDividendAmount: 0,
+            gamma: legs[multi][0].gamma,
+            multi: multilegs[multi]._id
+        };
+
+        for (const leg of legs[multi]) {
+            report.value += leg.value;
+            report.unrealized += leg.unrealized;
+            report.today += leg.today;
+            report.averageOpenPrice += leg.averageOpenPrice;
+            report.openQuantity += leg.openQuantity;
+            report.cost += leg.cost;
+            report.lastPrice += leg.lastPrice;
+        }
+
+        holdings.push(report);
     }
 
     if (!distribution["Cash"]) {

@@ -20,6 +20,9 @@ import db from "./lib/mongo";
 import { ObjectId } from "mongodb";
 import addPortfolio from "./api/add-portfolio";
 import { User } from "@schema/user";
+import getStockPriceAPI from "./api/get-stock-price";
+import getCryptoPriceAPI from "./api/get-crypto-price";
+import getStockNameAPI from "./api/get-stock-name";
 
 const discord = new DiscordBot();
 
@@ -178,7 +181,10 @@ const methods: { [key: string]: Method } = {
     "get-report": getReport,
     "add-trade": addTrade,
     "get-portfolios": getPortfolios,
-    "add-portfolio": addPortfolio
+    "add-portfolio": addPortfolio,
+    "get-stock-price": getStockPriceAPI,
+    "get-crypto-price": getCryptoPriceAPI,
+    "get-stock-name": getStockNameAPI
 };
 
 const connectedSessions: { [key: string]: any } = {};

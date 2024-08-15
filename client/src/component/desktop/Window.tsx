@@ -3,6 +3,7 @@ import styled from "styled-components";
 import { DraggableData, Rnd } from "react-rnd";
 import { Windows } from "../../App";
 import { Button } from "rsuite";
+import Icon from "../Icon";
 
 const WindowWrapper = styled(Rnd)`
     border: 1px solid var(--rs-gray-700);
@@ -122,9 +123,7 @@ export default function Window({ title, children, windowId, defaultSize = { widt
                 <span className="title-bar-text">{title}</span>
                 <WindowButtons>
                     <Button size="xs" onClick={() => api.closeWindow(windowId)}>
-                        <span className="material-symbols-outlined">
-                            close
-                        </span>
+                        <Icon name="close" />
                     </Button>
                 </WindowButtons>
             </TitleBar>
