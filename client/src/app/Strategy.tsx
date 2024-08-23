@@ -171,7 +171,7 @@ export default class Strategy extends React.Component<any, StrategyState> {
                             onConnect={this.onConnect}
                             onPaneContextMenu={this.onPaneContextMenu}
                             onPaneClick={() => this.setState({ showAddNode: false })}
-                            onMove={(e, data) => {
+                            onMove={(_e, data) => {
                                 this.setState({
                                     viewport: data
                                 });

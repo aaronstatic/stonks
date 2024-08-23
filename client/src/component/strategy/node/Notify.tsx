@@ -30,7 +30,7 @@ export default class RSINode extends BaseNode<NotifyNodeData> {
                     onChange={v => this.onChange('notify', v)}
                     cleanable={false}
                     data={[
-                        { label: 'Pushbullet', value: 'pushbullet' },
+                        { label: 'Pushover', value: 'pushover' },
                         { label: 'Discord', value: 'discord' }
                     ]}
                 />

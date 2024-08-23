@@ -5,7 +5,7 @@ import db from "./mongo";
 const notify = new Pushover(process.env.PUSHOVER_USER || "",
     process.env.PUSHOVER_TOKEN || "");
 
-export async function sendNotification(message: string, priority: any) {
+export async function sendNotification(message: string, priority: any = 1) {
     //record this notification in mongo so we dont repeat it per day
 
     //Get date in new york
