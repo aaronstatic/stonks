@@ -12,12 +12,13 @@ import Holdings from './app/Holdings'
 import Holding from './app/Holding'
 import Dashboard from './report/Dashboard'
 import Option from './app/Option'
-import AddTrade from './app/AddTrade'
 import Watchlist from './app/Watchlist'
 import WatchlistItemReport from './app/WatchlistItem'
 import Index from './report/Index'
 import { User } from '@schema/user'
 import AllTrades from './app/AllTrades'
+import Strategies from './app/Strategies'
+import Strategy from './app/Strategy'
 
 type WindowData = {
   id: string;
@@ -51,11 +52,12 @@ const Applications: ApplicationMap = {
   Holdings,
   Holding,
   Option,
-  AddTrade,
   Watchlist,
   WatchlistItemReport,
   Index,
-  AllTrades
+  AllTrades,
+  Strategies,
+  Strategy
 }
 
 const TypeApplications: TypeMap = {
@@ -63,7 +65,8 @@ const TypeApplications: TypeMap = {
   "holding": "Holding",
   "option": "Option",
   "watchlist": "WatchlistItemReport",
-  "index": "Index"
+  "index": "Index",
+  "strategy": "Strategy"
 }
 
 const DefaultSizes: SizeMap = {
@@ -98,6 +101,10 @@ const DefaultSizes: SizeMap = {
   "AllTrades": {
     width: 930,
     height: 730
+  },
+  "Strategy": {
+    width: 930,
+    height: 730
   }
 }
 
@@ -106,6 +113,7 @@ export type MenuItem = {
   id: string;
   title: string;
   icon: string;
+  requiredCap?: string;
 }
 
 const menuItems: MenuItem[] = [
@@ -133,6 +141,12 @@ const menuItems: MenuItem[] = [
     id: "Watchlist",
     title: "Watchlist",
     icon: "trending_up"
+  },
+  {
+    id: "Strategies",
+    title: "Strategies",
+    icon: "polyline",
+    requiredCap: "strategy"
   }
 ]
 

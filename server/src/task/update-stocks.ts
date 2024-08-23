@@ -53,10 +53,8 @@ export default async function updateStocks(): Promise<boolean> {
     const financialsCollection = db.collection('stocks-financials');
     const dividendCollection = db.collection('stocks-dividends');
 
-    const allHoldings = await db.collection('holding').find({
-        type: "Stock"
-    }).toArray();
-    const tickers = allHoldings.map(holding => holding.ticker);
+    const openHoldings = await getOpenStockHoldings();
+    const tickers = openHoldings.map(holding => holding.ticker);
 
     const uniqueTickers = [...new Set(tickers)];
 
@@ -86,44 +84,9 @@ export default async function updateStocks(): Promise<boolean> {
 
     for (const ticker of uniqueTickers) {
         //Update candles
-        const last = await collection.findOne({ ticker: ticker }, { sort: { timestamp: -1 } });
-
-        const startOfYear = DateTime.now().startOf('year');
-        const from = last ? DateTime.fromISO(last.timestamp) : startOfYear;
-        const to = DateTime.now();
-
-        console.log('Updating', ticker, 'from', from.toISO(), 'to', to.toISO());
-        const candles = await polygon.stocks.aggregates(
-            ticker,
-            1,
-            'day',
-            from.toMillis().toString(),
-            to.toMillis().toString()
-        );
-        if (!candles.results) {
-            console.log('No results for', ticker);
-            continue;
-        }
-        for (const candle of candles.results) {
-            if (!candle.t) continue;
-            const timestamp = DateTime.fromMillis(candle.t).toISO();
-            await collection.findOneAndUpdate({
-                ticker: ticker,
-                timestamp: timestamp
-            }, {
-                $set: {
-                    ticker: ticker,
-                    timestamp: timestamp,
-                    open: candle.o,
-                    high: candle.h,
-                    low: candle.l,
-                    close: candle.c,
-                    volume: candle.v
-                }
-            }, {
-                upsert: true
-            });
-        }
+        await updateCandles(ticker, 1, 'day');
+        await updateCandles(ticker, 4, 'hour');
+        await updateCandles(ticker, 15, 'minute');
 
         //update details
         let stockType = "CS";
@@ -307,4 +270,57 @@ export default async function updateStocks(): Promise<boolean> {
 
 
     return true;
+}
+
+async function updateCandles(ticker: string, multiplier: number, timespan: string) {
+
+    const collection = db.collection(`stocks-${multiplier}${timespan[0]}`);
+
+    const last = await collection.findOne({ ticker: ticker }, { sort: { timestamp: -1 } });
+    let earliest = DateTime.now();
+    if (timespan == 'day') {
+        earliest = earliest.minus({ days: 365 });
+    } else if (timespan == 'hour') {
+        earliest = earliest.minus({ days: 30 });
+    } else if (timespan == 'minute') {
+        earliest = earliest.minus({ days: 7 });
+    }
+
+    const from = last ? DateTime.fromISO(last.timestamp) : earliest;
+    const to = DateTime.now();
+
+    console.log('Updating', ticker, 'from', from.toISO(), 'to', to.toISO(), 'with', multiplier, timespan);
+
+    const candles = await polygon.stocks.aggregates(
+        ticker,
+        multiplier,
+        timespan,
+        from.toMillis().toString(),
+        to.toMillis().toString()
+    );
+    if (!candles.results) {
+        console.log('No results for', ticker);
+        return;
+    }
+
+    for (const candle of candles.results) {
+        if (!candle.t) continue;
+        const timestamp = DateTime.fromMillis(candle.t).toISO();
+        await collection.findOneAndUpdate({
+            ticker: ticker,
+            timestamp: timestamp
+        }, {
+            $set: {
+                ticker: ticker,
+                timestamp: timestamp,
+                open: candle.o,
+                high: candle.h,
+                low: candle.l,
+                close: candle.c,
+                volume: candle.v
+            }
+        }, {
+            upsert: true
+        });
+    }
 }

@@ -2,7 +2,7 @@ import Account from "@schema/account";
 import Trade from "@schema/trade";
 import { DateTime } from "luxon";
 import { useEffect, useState } from "react";
-import { DatePicker, Form, Grid, Row, Col, InputNumber, InputPicker, Loader, Button, HStack } from "rsuite";
+import { DatePicker, Form, InputNumber, InputPicker, Loader, Button, HStack } from "rsuite";
 import Server from "../lib/Server";
 import Option from "@schema/option";
 
@@ -131,13 +131,15 @@ export default function AddTrade({ onAdd, onCancel }: AddTradeProps) {
             option.strike = parseFloat(option.strike.toString());
         }
         Server.addTrade(ticker, tradeType, trade, option).then(() => {
-            onAdd();
+
         });
+        onAdd();
     }
 
     if (error) return <div>{error}</div>;
 
-    return <Form>
+    return <Form style={{ padding: 10 }}>
+        <h3>Add Trade</h3>
         <Form.Group controlId="timestamp">
             <Form.ControlLabel>Type</Form.ControlLabel>
             <InputPicker

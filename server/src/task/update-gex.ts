@@ -263,8 +263,21 @@ async function updateGammaLevels(ticker: string, date: string): Promise<boolean>
 async function getOpenInterestGreeks(ticker: string, expiration: string, type: "call" | "put"): Promise<{ strike: number, type: string, oi: number, greeks: { delta: number, gamma: number, theta: number, vega: number } }[]> {
     try {
         const price = await getStockPrice(ticker);
-        const floor = price * 0.9;
-        const ceiling = price * 1.1;
+        let floor = price * 0.93;
+        let ceiling = price * 1.07;
+        if (price < 10) {
+            floor = 0;
+            ceiling = price * 2;
+        } else if (price < 100) {
+            floor = price * 0.5;
+            ceiling = price * 1.5;
+        } else if (price < 250) {
+            floor = price * 0.75;
+            ceiling = price * 1.25;
+        } else if (price < 500) {
+            floor = price * 0.85;
+            ceiling = price * 1.15;
+        }
         const gex = await polygon.options.snapshotOptionChain(ticker, {
             expiration_date: expiration,
             limit: 250,

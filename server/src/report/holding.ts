@@ -7,8 +7,10 @@ import { getExchangeRate } from "../lib/currency";
 import { getDayChange, getNextExpiryGammaZone, getStockDayCandle, getStockPrice, sortEvent } from "../lib/stocks";
 import Option from "@schema/option";
 import { castHolding, getHolding } from "../lib/holdings";
-import { castOption, getOpenOptionQuantity, getOpenOptionSnapshot, getOptionDayCandle, getOptionDayChange, getOptionName, getOptionPrice, getOptionTicker } from "../lib/options";
+import { castOption, getOpenOptionSnapshot, getOptionDayCandle, getOptionDayChange, getOptionName, getOptionPrice, getOptionTicker } from "../lib/options";
 import { ObjectId } from "mongodb";
+
+import { bondStocks } from "./dashboard";
 
 export default async function holdingReport(owner: string = "", params: any = {}): Promise<HoldingReport | null> {
     const ticker: string = params.ticker;
@@ -87,8 +89,9 @@ async function stockHolding(holding: Holding, toDateDT: DateTime): Promise<Holdi
     today += quantity * dayChange;
 
     let holdingType = holding.type;
-    if (holding.risk == 0) holdingType = "Cash";
-    if (holding.risk == 1) holdingType = "Bonds";
+    if (bondStocks.includes(holding.ticker)) {
+        holdingType = "Bonds";
+    }
 
     let valueMainCurrency = 0;
     let costMainCurrency = 0;
@@ -185,7 +188,7 @@ async function stockHolding(holding: Holding, toDateDT: DateTime): Promise<Holdi
         currency: holding.currency,
         ticker: holding.ticker,
         type: holdingType,
-        risk: holding.risk,
+        risk: holding.risk || 0,
         unrealized: unrealized,
         openQuantity: quantity,
         averageOpenPrice: cost / quantity,
@@ -272,7 +275,7 @@ async function cryptoHolding(holding: Holding, toDateDT: DateTime): Promise<Hold
         currency: "USDT",
         ticker: holding.ticker,
         type: holding.type,
-        risk: holding.risk,
+        risk: holding.risk || 0,
         unrealized: (quantity * price) - cost,
         openQuantity: quantity,
         averageOpenPrice: cost / quantity,
@@ -310,7 +313,10 @@ async function optionHolding(option: Option, toDateDT: DateTime): Promise<Holdin
     const candles = await db.collection('options-1d').find({ ticker: ticker }).toArray();
 
     if (candles.length == 0) {
-        const { qty, avgPrice } = await getOpenOptionSnapshot(option._id);
+        let { qty, avgPrice } = await getOpenOptionSnapshot(option._id);
+        if (avgPrice == Infinity) {
+            avgPrice = 0;
+        }
         return {
             name: name,
             realized: 0,
@@ -454,6 +460,9 @@ async function optionHolding(option: Option, toDateDT: DateTime): Promise<Holdin
 
     let gammaZone = await getNextExpiryGammaZone(holding.ticker);
 
+    let risk = 4;
+    if (option.type == "put") risk = -4;
+
     return {
         name: name,
         realized: realized * 100,
@@ -463,13 +472,13 @@ async function optionHolding(option: Option, toDateDT: DateTime): Promise<Holdin
         currency: holding.currency,
         ticker: name,
         type: "Option",
-        risk: 7,
+        risk: risk,
         unrealized: unrealized,
         openQuantity: quantity,
         averageOpenPrice: 100 * cost / quantity,
-        value: valueMainCurrency,
+        value: valueMainCurrency || 0,
         today: today,
-        cost: costMainCurrency * 100,
+        cost: (costMainCurrency || 0) * 100,
         nextEarnings: nextEarnings,
         nextEarningsTime: nextEarningsTime,
         lastDividend: "",

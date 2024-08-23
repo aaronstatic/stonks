@@ -15,9 +15,12 @@ import updateGEX from "./task/update-gex";
 import updateGamma from "./task/update-gamma";
 import db from "./lib/mongo";
 import { ObjectId } from "mongodb";
+import updateGainers from "./task/update-gainers";
+import updateStrategies from "./task/update-strategies";
 
 let tasks: { [name: string]: BaseTask } = {
     updateCalendar,
+    updateGainers,
     updateGEX,
     updateGamma,
     updateExchangeRates,
@@ -27,7 +30,8 @@ let tasks: { [name: string]: BaseTask } = {
     updateBybit,
     updateHistory,
     updateIndices,
-    updateOptions
+    updateOptions,
+    updateStrategies
 };
 
 let tasksToRun = [];

@@ -58,6 +58,12 @@ const Username = styled.div`
     color: var(--rs-sidenav-subtle-text);
 `
 
+const MobileNav = styled(Nav)`
+    display: flex;
+    justify-content: space-around;
+    padding-top: 3px;
+`
+
 interface MenuProps {
     items: MenuItem[];
     onClick: (type: string, id: string) => void;
@@ -111,12 +117,15 @@ export default function Menu({ items, onClick, mobile }: MenuProps) {
                                 </AddButton>
                             </HStack>
                             <Nav style={{ marginTop: 20 }}>
-                                {items.map(item => (
-                                    <Nav.Item key={item.id} onClick={() => onClick(item.id, item.id)}>
-                                        <ButtonIcon name={item.icon} />
-                                        <ButtonText>{item.title}</ButtonText>
-                                    </Nav.Item>
-                                ))}
+                                {items.map(item => {
+                                    if (item.requiredCap && !userData.caps.includes(item.requiredCap)) return null;
+                                    return (
+                                        <Nav.Item key={item.id} onClick={() => onClick(item.id, item.id)}>
+                                            <ButtonIcon name={item.icon} />
+                                            <ButtonText>{item.title}</ButtonText>
+                                        </Nav.Item>
+                                    )
+                                })}
                             </Nav>
                         </Sidenav.Body>
                     </Sidenav>
@@ -130,14 +139,14 @@ export default function Menu({ items, onClick, mobile }: MenuProps) {
             )}
             {mobile && (
                 <>
-                    <Nav>
+                    <MobileNav>
                         <Logo onClick={() => onClick("dashboard", "dashboard")} src="/img/stonks-logo.png" alt="logo" />
                         {items.map(item => (
                             <Nav.Item key={item.id} onClick={() => onClick(item.id, item.id)}>
                                 <ButtonIcon name={item.icon} />
                             </Nav.Item>
                         ))}
-                    </Nav>
+                    </MobileNav>
                 </>
             )}
 

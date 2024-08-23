@@ -1,7 +1,7 @@
 import Trade from "@schema/trade";
 import { useEffect, useState } from "react";
 import Server from "../lib/Server";
-import { Button, Loader, Pagination, Table, Tabs } from "rsuite";
+import { Button, Loader, Pagination, Table } from "rsuite";
 import styled from "styled-components";
 import { DateTime } from "luxon";
 import Icon from "../component/Icon";
@@ -52,9 +52,9 @@ export default function AllTrades() {
                     next
                     first
                     last
-                    ellipsis
-                    boundaryLinks
-                    size="xs"
+                    size="md"
+                    maxButtons={5}
+                    layout={['pager']}
                     activePage={page}
                     onChangePage={setPage}
                     limit={10}
@@ -95,7 +95,7 @@ export default function AllTrades() {
                             }}
                         </Table.Cell>
                     </Table.Column>
-                    <Table.Column width={150} align="center" fixed>
+                    <Table.Column width={150} align="center">
                         <Table.HeaderCell>Timestamp</Table.HeaderCell>
                         <Table.Cell>
                             {rowData => DateTime.fromISO(rowData.timestamp).toLocaleString(DateTime.DATETIME_MED)}

@@ -7,11 +7,13 @@ export default async function updateHistory() {
 
     const users = await userCollection.find({}).toArray();
     for (const user of users) {
+        console.log("Updating history for", user.username);
         await updateHistoryForUser(user._id.toString());
     }
 
     const portfolios = await db.collection('portfolio').find({}).toArray();
     for (const portfolio of portfolios) {
+        console.log("Updating history for", portfolio.name);
         await updateHistoryForUser(portfolio._id.toString());
     }
 

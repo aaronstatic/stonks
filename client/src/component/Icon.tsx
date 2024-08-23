@@ -6,6 +6,7 @@ type IconProps = {
 };
 
 export default function Icon({ name, onClick, className, iconStyle = "outlined" }: IconProps) {
+    if (!className) className = "icon";
     return (
         <div className={className + " material-symbols-" + iconStyle} onClick={onClick}>
             {name}

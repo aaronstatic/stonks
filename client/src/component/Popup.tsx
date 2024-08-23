@@ -28,7 +28,7 @@ const PopupPanel = styled(Panel)`
     z-index: 40;
     background-color: var(--rs-gray-900);
     width: 393px;    
-    margin: 5% auto;
+    margin: 10% auto;
     .rs-panel-body {
         padding: 15px;
         max-height: 370px;

@@ -70,7 +70,12 @@ export async function fetchStockPrice(ticker: string): Promise<number> {
 }
 
 export async function getStockPrice(ticker: string, date: string = "", fetch: boolean = false): Promise<number> {
-    const candle = await getStockDayCandle(ticker, date);
+    let candle;
+    if (date == "") {
+        candle = await getLatestStockCandle(ticker);
+    } else {
+        candle = await getStockDayCandle(ticker, date);
+    }
     if (!candle) {
         if (fetch) {
             return await fetchStockPrice(ticker);
@@ -81,7 +86,7 @@ export async function getStockPrice(ticker: string, date: string = "", fetch: bo
 }
 
 export async function getLatestStockCandle(ticker: string): Promise<any> {
-    const collection = db.collection('stocks-1d');
+    const collection = db.collection('stocks-15m');
     const events = await collection.find({ ticker: ticker }).toArray();
     const sorted = events.sort(sortEvent);
     if (sorted.length === 0) return null;
@@ -240,4 +245,17 @@ export async function getStockName(ticker: string, fetch: boolean = false): Prom
         return "";
     }
     return doc.name;
+}
+
+export async function getLastBuyDate(owner: string, ticker: string): Promise<string> {
+    const collection = db.collection('trade');
+    const holdingCollection = db.collection('holding');
+    const holding = await holdingCollection.findOne({ owner: owner, ticker: ticker });
+
+    if (!holding) return "";
+    const trades = await collection.find({ holding: holding._id.toString(), type: "BUY" }).toArray();
+
+    if (trades.length == 0) return "";
+    const sorted = trades.sort(sortEvent);
+    return sorted[sorted.length - 1].timestamp;
 }

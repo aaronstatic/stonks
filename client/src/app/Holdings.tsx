@@ -74,7 +74,7 @@ class Holdings extends CRUDTable {
                     <Form.ControlLabel>Risk</Form.ControlLabel>
                     <InputNumber
                         name="amount"
-                        min={0}
+                        min={-10}
                         value={holding?.risk}
                         onChange={(v) => {
                             this.onFieldChange("risk", v);

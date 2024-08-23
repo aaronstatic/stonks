@@ -5,6 +5,7 @@ import Popup from "./Popup";
 import Object from "@schema/object";
 import Icon from "./Icon";
 import styled from "styled-components";
+import Toolbar from "./desktop/Toolbar";
 
 export interface CRUDState {
     showPopup: boolean;
@@ -153,14 +154,16 @@ class CRUD extends React.Component<any, CRUDState> {
 
         return (
             <>
-                <Button size="md" color="green" onClick={() => {
-                    const newObject = { ...this.defaultValues };
-                    this.setSelectedObject(newObject);
-                    this.setShowPopup(true);
-                }}>
-                    <ButtonIcon name="add" />
-                    Add New {this.displayName}
-                </Button>
+                <Toolbar>
+                    <Button size="xs" color="green" onClick={() => {
+                        const newObject = { ...this.defaultValues };
+                        this.setSelectedObject(newObject);
+                        this.setShowPopup(true);
+                    }}>
+                        <ButtonIcon name="add" />
+                        Add New {this.displayName}
+                    </Button>
+                </Toolbar>
                 <br /><br />
                 {this.renderData()}
                 <Popup

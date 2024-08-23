@@ -19,13 +19,15 @@ const TitleBar = styled.div`
     color: var(--rs-gray-400);
 `
 
-const Content = styled.div`
-    padding: 8px;
+const Content = styled.div`    
     background-color: var(--rs-gray-800);    
     flex: 1;
     text-align: left;
     position: relative;
     overflow: auto;
+    .rs-tab-panel {
+        padding: 8px;
+    }
 `
 
 const WindowButtons = styled.div`

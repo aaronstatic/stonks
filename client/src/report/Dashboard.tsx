@@ -13,6 +13,7 @@ import { DateTime } from 'luxon';
 import { UserData } from '../App';
 import DailyProfitLoss from './DailyProfitLoss';
 import DailyValue from './DailyValue';
+import DailyRisk from './DailyRisk';
 
 const Wrapper = styled.div`
     display: grid;
@@ -139,6 +140,14 @@ function HoldingTable({ data, userData, totalValue }: { data: HoldingReport[], u
                 <Table.Cell>
                     {(rowData: HoldingReport) => (
                         <span>{thousands(rowData.value.toFixed(2))} {userData.currency} ({((rowData.value / totalValue) * 100).toFixed(2)}%)</span>
+                    )}
+                </Table.Cell>
+            </Table.Column>
+            <Table.Column width={mediumColumnSize} align="center">
+                <Table.HeaderCell>Risk</Table.HeaderCell>
+                <Table.Cell>
+                    {(rowData: HoldingReport) => (
+                        <span>{((rowData.risk * rowData.value) / totalValue).toFixed(2)}</span>
                     )}
                 </Table.Cell>
             </Table.Column>
@@ -272,6 +281,10 @@ export default function Dashboard() {
                         <StatValue>{thousands(data.totalValue.toFixed(2))} {userData?.currency}</StatValue>
                     </Stat>
                     <Stat>
+                        <StatLabel>Total Risk</StatLabel>
+                        <StatValue>{data.risk.toFixed(2)}</StatValue>
+                    </Stat>
+                    <Stat>
                         <StatLabel>Realized P&L (FY)</StatLabel>
                         <StatValue className={data.realizedfy > 0 ? "green" : "red"}>{thousands(data.realizedfy.toFixed(2))} {userData.currency}</StatValue>
 
@@ -293,6 +306,9 @@ export default function Dashboard() {
                     </Tabs.Tab>
                     <Tabs.Tab eventKey="value" title="Value">
                         <DailyValue />
+                    </Tabs.Tab>
+                    <Tabs.Tab eventKey="risk" title="Risk">
+                        <DailyRisk />
                     </Tabs.Tab>
                     <Tabs.Tab eventKey="distribution" title="Distribution">
                         <ChartWrapper>

@@ -12,6 +12,14 @@ import { DateTime } from "luxon";
 import { ObjectId } from "mongodb";
 import MultiLegOption from "@schema/multilegoption";
 
+export const bondStocks = [
+    "TLT"
+]
+
+export const goldStocks = [
+    "GLD"
+]
+
 export default async function dashboard(owner: string = "", params: any = {}): Promise<DashboardReport> {
     let toDate = params.toDate || "";
 
@@ -31,12 +39,14 @@ export default async function dashboard(owner: string = "", params: any = {}): P
             totalValue += report.value || 0;
             totalUnrealized += report.unrealized || 0;
             dayTotal += report.today || 0;
-            risk += report.risk || 0 * report.value || 0;
+            risk += (report.risk || 0) * (report.value || 0);
 
             let holdingType = "Stock";
-            if (holding.risk == 0) holdingType = "Cash";
-            if (holding.risk == 1) holdingType = "Bonds";
-            if (holding.ticker == "GLD") holdingType = "Gold";
+            if (bondStocks.includes(holding.ticker)) {
+                holdingType = "Bonds";
+            } else if (goldStocks.includes(holding.ticker)) {
+                holdingType = "Gold";
+            }
 
             if (!distribution[holdingType]) {
                 distribution[holdingType] = 0;
@@ -104,11 +114,15 @@ export default async function dashboard(owner: string = "", params: any = {}): P
                 quantity -= trade.quantity;
             }
         }
+        let risk = 3;
+        if (multilegs[multi].type.includes("Bear")) {
+            risk = -3;
+        }
         const report: HoldingReport = {
             ticker: multilegs[multi].name,
             name: multilegs[multi].name,
             type: "Option",
-            risk: 0,
+            risk: risk,
             unrealized: 0,
             realized: 0,
             realizedfy: 0,
@@ -161,6 +175,8 @@ export default async function dashboard(owner: string = "", params: any = {}): P
 
     distribution["Cash"] += accountBalance;
     totalValue += accountBalance;
+
+    risk += accountBalance * -3;
 
     holdings.sort((a, b) => {
         if (a.value < b.value) return 1;

@@ -123,7 +123,7 @@ export default class Server {
             });
         });
     }
-    static async update(type: string, id: string, object: Object): Promise<Object> {
+    static async update(type: string, id: string, object: { [key: string]: any }): Promise<Object> {
         return new Promise((resolve) => {
             this.call('update-object', { type, id, object }).then((data) => {
                 resolve(data as Object);
@@ -138,7 +138,7 @@ export default class Server {
         });
     }
 
-    static async get(type: string, id: string): Promise<Object> {
+    static async get(type: string, id: string): Promise<any> {
         return new Promise((resolve) => {
             this.call('get-object', { type, id }).then((data) => {
                 resolve(data as Object);

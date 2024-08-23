@@ -32,7 +32,7 @@ export default async function updateIndices(): Promise<boolean> {
     const now = DateTime.now().setZone("America/New_York");
     if (now.weekday > 5) return true; //only run on weekdays
     if (now.hour < 8 || now.hour > 16) return true; //only run during market hours
-    if (now.minute < 25 || now.minute > 35) return true; //only run halfway through the hour
+    //if (now.minute < 25 || now.minute > 35) return true; //only run halfway through the hour
 
     for (const index of stocks) {
         if (indices.includes(index)) {

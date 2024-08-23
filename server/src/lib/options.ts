@@ -4,7 +4,7 @@ import { sortEvent } from './stocks';
 import { ObjectId } from 'mongodb';
 import polygon from './polygon';
 import { DateTime } from 'luxon';
-import { getHolding } from './holdings';
+import { getHolding, getHoldingByTicker } from './holdings';
 import Holding from '@schema/holding';
 import MultiLegOption from '@schema/multilegoption';
 
@@ -270,4 +270,47 @@ export async function getOpenOptionSnapshot(id: string, toDate: string = ""): Pr
     }
     return { qty: quantity, avgPrice: cost / quantity };
 
+}
+
+export function parseOptionName(name: string): { ticker: string, strike: number, type: string, expiry: string } | null {
+    //Parse name into ticker, strike, type, expiry
+    //Format: TSLA 700C 18 Dec 
+
+    const parts = name.split(' ');
+    if (parts.length != 4) return null;
+
+    const ticker = parts[0];
+    const strike = parseFloat(parts[1]);
+    const type = parts[1].slice(-1) == 'C' ? 'Call' : 'Put';
+    const expiry = parts[2] + ' ' + parts[3];
+
+    return { ticker, strike, type, expiry };
+}
+
+export async function getOptionByParams(owner: string, params: { ticker: string, strike: number, type: string, expiry: string }): Promise<Option | null> {
+    const collection = db.collection('option');
+    let expiry = DateTime.fromFormat(params.expiry, 'd MMM');
+    //make sure expiry is in the future
+    if (expiry < DateTime.now()) expiry = expiry.plus({ years: 1 });
+
+    const holding = await getHoldingByTicker(owner, params.ticker);
+    if (!holding) return null;
+
+    const option = await collection.findOne({
+        owner: owner,
+        holding: holding._id.toString(),
+        strike: params.strike,
+        type: params.type,
+        expiry: expiry.toISO()
+    });
+    if (!option) return null;
+    return castOption(option);
+}
+
+export async function getLastOptionBuyDate(owner: string, optionId: string): Promise<string> {
+    const collection = db.collection('optiontrade');
+    const trades = await collection.find({ owner: owner, option: optionId, type: "BUY" }).toArray();
+    if (trades.length == 0) return "";
+    const sorted = trades.sort(sortEvent);
+    return sorted[sorted.length - 1].timestamp;
 }

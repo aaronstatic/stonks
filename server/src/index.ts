@@ -218,7 +218,8 @@ wss.on("connection", (ws) => {
                         currency: sesh.portfolioId == "default" ? user.currency : "USD",
                         username: user.username,
                         avatar: `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`,
-                        name: user.global_name
+                        name: user.global_name,
+                        caps: user.caps || []
                     }
                 }
             }
