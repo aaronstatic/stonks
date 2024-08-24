@@ -1,3 +1,4 @@
+import { DateTime } from "luxon";
 import db from "../lib/mongo";
 
 import BaseNode, { Inputs, Outputs } from "../strategy/node/BaseNode";
@@ -71,12 +72,32 @@ function processNode(node: Node, inputs: Inputs, context: any): Outputs {
 }
 
 
-export default async function updateStrategies(): Promise<boolean> {
+export default async function updateStrategies(now: DateTime): Promise<boolean> {
     const collection = db.collection("strategy");
     const watchlist = db.collection("watchlist");
     const strategies = await collection.find().toArray();
 
+    now = now.setZone("America/New_York");
+
     for (const strategy of strategies) {
+        if (!strategy.nodes || !strategy.edges) {
+            continue;
+        }
+        let timeframe = strategy.timeframe || "1d";
+
+        if (timeframe === "1d") {
+            //Process at market close
+            if (now.hour != 16 || now.minute != 0) continue;
+        }
+        if (timeframe === "4h") {
+            //Process at 4h close
+            if (now.hour % 4 != 0 || now.minute != 0) continue;
+        }
+        if (timeframe === "1h") {
+            //Process at 1h close
+            if (now.minute != 0) continue;
+        }
+
         const owner = strategy.owner;
         const watchlistItems = await watchlist.find({ owner }).toArray();
         const stocks = watchlistItems.map(item => item.ticker);
@@ -92,8 +113,10 @@ export default async function updateStrategies(): Promise<boolean> {
         const sortedNodes = topologicalSort(nodes, edges);
 
         for (const ticker of stocks) {
-            console.log(`Processing strategy ${strategy.name} for ${ticker}`);
-            const candles = await db.collection('stocks-15m').find({ ticker: ticker }).toArray();
+            console.log(`Processing strategy ${strategy.name} for ${ticker} on ${timeframe} timeframe`);
+            let limit = 300;
+            const candles = await db.collection(`stocks-${timeframe}`).find({ ticker: ticker }).sort({ timestamp: -1 }).limit(limit).toArray();
+            candles.reverse();
             let context: { [key: string]: any } = {
                 ticker,
                 Candles: candles

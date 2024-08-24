@@ -3,9 +3,9 @@ import db from "../lib/mongo";
 import polygon from "../lib/polygon";
 
 
-export default async function updateExchangeRates(): Promise<boolean> {
-    const now = DateTime.now().setZone("America/New_York");
-    if (now.minute < 25 || now.minute > 35) return true; //only run halfway through the hour
+export default async function updateExchangeRates(now: DateTime): Promise<boolean> {
+    now = now.setZone("America/New_York");
+    if (now.minute != 30) return true; //only run halfway through the hour
 
     const collection = db.collection('exchange-rates');
 

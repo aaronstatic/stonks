@@ -2,7 +2,7 @@ import { DateTime } from "luxon";
 import db from "../lib/mongo";
 import openHoldings from "../report/dashboard";
 
-export default async function updateHistory() {
+export default async function updateHistory(_now: DateTime) {
     const userCollection = db.collection('users');
 
     const users = await userCollection.find({}).toArray();

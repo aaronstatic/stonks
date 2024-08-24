@@ -5,7 +5,11 @@ import { getOpenOptions, getOptionTicker } from "../lib/options";
 import { getHolding } from "../lib/holdings";
 import { ObjectId } from "mongodb";
 
-export default async function updateOptions(): Promise<boolean> {
+export default async function updateOptions(now: DateTime): Promise<boolean> {
+    now = now.setZone("America/New_York");
+    if (now.weekday > 5) return true;
+    if (now.hour < 9 || now.hour > 16) return true;
+
     const collection = db.collection('options-1d');
     const optionCollection = db.collection('option');
 

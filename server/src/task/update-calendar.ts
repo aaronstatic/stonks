@@ -3,13 +3,13 @@ import db from "../lib/mongo";
 import { sendNotification } from "../lib/pushover";
 import { DateTime } from "luxon";
 
-export default async function updateCalendar(): Promise<boolean> {
+export default async function updateCalendar(now: DateTime): Promise<boolean> {
     const collection = db.collection("calendar");
 
     //Do ASX once a day at 10am Melbourne time
-    const nowAU = DateTime.now().setZone("Australia/Melbourne");
+    const nowAU = now.setZone("Australia/Melbourne");
 
-    if (nowAU.weekday < 6 && nowAU.hour == 10 && nowAU.minute < 5) {
+    if (nowAU.weekday < 6 && nowAU.hour == 10 && nowAU.minute == 0) {
         const calendarAU = await fetch('https://nfs.faireconomy.media/ff_calendar_thisweek.json');
         const eventsAU = await calendarAU.json();
 
@@ -48,8 +48,8 @@ export default async function updateCalendar(): Promise<boolean> {
     }
 
     //Do USA events once a day at pre-market open NY time
-    const now = DateTime.now().setZone("America/New_York");
-    if (now.weekday < 6 && now.hour == 4 && now.minute < 5) {
+    now = now.setZone("America/New_York");
+    if (now.weekday < 6 && now.hour == 4 && now.minute == 0) {
         const calendar = await fetch('https://nfs.faireconomy.media/ff_calendar_thisweek.json');
         const events = await calendar.json();
 

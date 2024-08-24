@@ -1,7 +1,8 @@
+import { DateTime } from "luxon";
 import db from "../lib/mongo";
 import polygon from "../lib/polygon";
 
-export default async function updateHoldings() {
+export default async function updateHoldings(_now: DateTime) {
     const collection = db.collection('holding');
 
     const allHoldings = await collection.find({}).toArray();

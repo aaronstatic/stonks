@@ -6,15 +6,15 @@ import { TransactionLogV5 } from "bybit-api";
 
 const orderIds: { [key: string]: number } = {};
 
-export default async function updateBybit(): Promise<boolean> {
+export default async function updateBybit(now: DateTime): Promise<boolean> {
     const accountCollection = db.collection('account');
     const account = await accountCollection.findOne({
         _id: new ObjectId(process.env.BYBIT_ACCOUNT)
     });
     if (!account) return true;
 
-    let start = DateTime.local().minus({ hours: 1 });
-    let end = DateTime.local();
+    let start = now.minus({ hours: 1 });
+    let end = now;
 
     console.log("Updating transactions from", start.toISO(), "to", end.toISO());
     const result = await updateTransactions(start, end, account.currency);

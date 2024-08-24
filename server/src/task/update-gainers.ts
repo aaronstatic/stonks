@@ -3,11 +3,11 @@ import db from "../lib/mongo";
 import polygon from "../lib/polygon";
 import { sendToDiscord } from "../lib/discord";
 
-export default async function updateGainers(): Promise<boolean> {
+export default async function updateGainers(now: DateTime): Promise<boolean> {
     //only do this once a day at 9am NY time
-    const now = DateTime.now().setZone("America/New_York");
+    now = now.setZone("America/New_York");
     if (now.weekday > 5) return true;
-    if (now.hour == 9 && now.minute >= 0 && now.minute < 5) {
+    if (now.hour == 9 && now.minute == 0) {
         const gainers = await polygon.stocks.snapshotGainersLosers("gainers");
 
         if (!gainers) return true;

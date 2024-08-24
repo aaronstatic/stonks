@@ -1,3 +1,5 @@
+import { DateTime } from "luxon";
+
 export declare interface BaseTask {
-    (): Promise<boolean>;
+    (now: DateTime): Promise<boolean>;
 }

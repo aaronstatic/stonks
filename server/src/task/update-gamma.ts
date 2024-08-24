@@ -11,17 +11,17 @@ import datalabelPlugin from "chartjs-plugin-datalabels";
 
 import fs from "fs";
 
-export default async function updateGamma(): Promise<boolean> {
+export default async function updateGamma(now: DateTime): Promise<boolean> {
     const collection = db.collection('gamma-1d');
 
     //only do this once a day at 8:30am NY time
-    const now = DateTime.now().setZone("America/New_York");
+    now = now.setZone("America/New_York");
     if (now.weekday > 5) return true;
-    if (now.hour == 8 && now.minute > 25 && now.minute < 44) {
-        await reportGammaChart("SPY");
-        await reportGamma("SPY");
-        await reportGammaChart("QQQ");
-        await reportGamma("QQQ");
+    if (now.hour == 8 && now.minute == 30) {
+        await reportGammaChart("SPY", now);
+        await reportGamma("SPY", now);
+        await reportGammaChart("QQQ", now);
+        await reportGamma("QQQ", now);
 
         const vix = await getLatestIndexCandle("^VIX");
 
@@ -58,7 +58,7 @@ export default async function updateGamma(): Promise<boolean> {
     return true;
 }
 
-async function reportGamma(ticker: string) {
+async function reportGamma(ticker: string, _now: DateTime) {
     const gamma = await getNextExpiryGamma(ticker);
     const price = await getStockPrice(ticker);
 
@@ -97,7 +97,7 @@ async function reportGamma(ticker: string) {
     });
 }
 
-async function reportGammaChart(ticker: string) {
+async function reportGammaChart(ticker: string, _now: DateTime) {
     const gamma = await getNextExpiryGamma(ticker);
     const spotPrice = await getStockPrice(ticker);
 

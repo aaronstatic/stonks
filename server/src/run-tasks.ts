@@ -17,6 +17,7 @@ import db from "./lib/mongo";
 import { ObjectId } from "mongodb";
 import updateGainers from "./task/update-gainers";
 import updateStrategies from "./task/update-strategies";
+import { DateTime } from "luxon";
 
 let tasks: { [name: string]: BaseTask } = {
     updateCalendar,
@@ -44,10 +45,11 @@ if (process.argv.length > 2) {
 
 const run = async () => {
     console.log("Running tasks");
+    const now = DateTime.now().toUTC();
     for (let taskName of tasksToRun) {
         const task = tasks[taskName];
         console.log(`Running task ${task.name}`);
-        const result = await task();
+        const result = await task(now);
         if (!result) {
             console.log(`Task ${task.name} failed`);
         }

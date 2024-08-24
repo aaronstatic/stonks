@@ -4,7 +4,7 @@ import { getOpenCryptoHoldings } from "../lib/crypto";
 import db from "../lib/mongo";
 
 
-export default async function updateCrypto(): Promise<boolean> {
+export default async function updateCrypto(_now: DateTime): Promise<boolean> {
     const collection = db.collection('crypto-1d');
 
     const allHoldings = await db.collection('holding').find({
