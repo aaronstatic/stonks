@@ -1,39 +1,26 @@
-import { Candle } from "@schema/report/candles";
+import RMA from "./RMA";
 
-export default function RSI(candles: Candle[], length: number): number[] {
-    if (candles.length < length) {
+export default function RSI(values: number[], length: number): number[] {
+    if (values.length < length) {
         return [50];
     }
     const rsi: number[] = [];
+    const gains: number[] = [];
+    const losses: number[] = [];
 
-    let gain = 0;
-    let loss = 0;
-
-    for (let i = 1; i < length; i++) {
-        const diff = candles[i].close - candles[i - 1].close;
-        if (diff > 0) {
-            gain += diff;
-        } else {
-            loss -= diff;
-        }
+    for (let i = 1; i < values.length; i++) {
+        const change = values[i] - values[i - 1];
+        gains.push(Math.max(change, 0));
+        losses.push(Math.max(-change, 0));
     }
 
-    let avgGain = gain / length;
-    let avgLoss = loss / length;
+    const averageGains = RMA(gains, length);
+    const averageLosses = RMA(losses, length);
 
-    rsi.push(100 - (100 / (1 + avgGain / avgLoss)));
-
-    for (let i = length; i < candles.length; i++) {
-        const diff = candles[i].close - candles[i - 1].close;
-        if (diff > 0) {
-            avgGain = (avgGain * (length - 1) + diff) / length;
-            avgLoss = (avgLoss * (length - 1)) / length;
-        } else {
-            avgGain = (avgGain * (length - 1)) / length;
-            avgLoss = (avgLoss * (length - 1) - diff) / length;
-        }
-
-        rsi.push(100 - (100 / (1 + avgGain / avgLoss)));
+    for (let i = 0; i < averageGains.length; i++) {
+        const rs = averageGains[i] / averageLosses[i];
+        const rsiValue = 100 - 100 / (1 + rs);
+        rsi.push(rsiValue);
     }
 
     return rsi;

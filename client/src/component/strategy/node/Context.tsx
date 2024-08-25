@@ -9,5 +9,20 @@ export default class ContextNode extends BaseNode<ContextNodeData> {
     outputs = [{
         name: 'Candles',
         type: 'candles'
+    }, {
+        name: 'Open',
+        type: 'value'
+    }, {
+        name: 'High',
+        type: 'value'
+    }, {
+        name: 'Low',
+        type: 'value'
+    }, {
+        name: 'Close',
+        type: 'value'
+    }, {
+        name: 'Volume',
+        type: 'value'
     }]
 }

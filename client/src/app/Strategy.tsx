@@ -26,10 +26,14 @@ import {
 } from '@xyflow/react';
 
 import styled from 'styled-components';
-import { Button, Loader } from 'rsuite';
+import { Button, InputPicker, Loader } from 'rsuite';
 import Server from '../lib/Server';
 import { ItemData } from '../App';
 import Toolbar from '../component/desktop/Toolbar';
+import StochasticRSINode from '../component/strategy/node/StochasticRSI';
+import EMANode from '../component/strategy/node/EMA';
+import BooleanNode from '../component/strategy/node/Boolean';
+import HawkesVolatilityNode from '../component/strategy/node/HawkesVolatility';
 
 const Wrapper = styled.div`
     display: flex;
@@ -83,6 +87,7 @@ type StrategyState = {
     showAddNode: boolean,
     addNodePosition: { x: number, y: number },
     viewport: { x: number, y: number, zoom: number }
+    timeframe: string
 };
 
 type NodeType = ComponentType<NodeProps & {
@@ -102,11 +107,23 @@ const nodeTypes: NodeDef[] = [{
     type: 'rsi',
     Component: RSINode
 }, {
+    type: 'stochasticrsi',
+    Component: StochasticRSINode
+}, {
+    type: 'ema',
+    Component: EMANode
+}, {
+    type: 'hawkes',
+    Component: HawkesVolatilityNode
+}, {
     type: 'condition',
     Component: ConditionNode
 }, {
     type: 'notify',
     Component: NotifyNode
+}, {
+    type: 'boolean',
+    Component: BooleanNode
 }];
 
 export default class Strategy extends React.Component<any, StrategyState> {
@@ -123,6 +140,7 @@ export default class Strategy extends React.Component<any, StrategyState> {
             loading: true,
             nodes: initialNodes,
             edges: initialEdges,
+            timeframe: '1d',
             showAddNode: false,
             addNodePosition: { x: 0, y: 0 },
             viewport: { x: 0, y: 0, zoom: 1 }
@@ -155,6 +173,17 @@ export default class Strategy extends React.Component<any, StrategyState> {
             <Wrapper>
                 <Toolbar>
                     <Button size="xs" onClick={this.save}>Save</Button>
+                    <InputPicker
+                        name="timeframe"
+                        cleanable={false}
+                        data={[
+                            { label: '15m', value: '15m' },
+                            { label: '4h', value: '4h' },
+                            { label: '1d', value: '1d' }
+                        ]}
+                        value={this.state.timeframe}
+                        onChange={v => this.setState({ timeframe: v })}
+                    />
                 </Toolbar>
                 <Flow>
                     <ReactFlowProvider>
@@ -286,6 +315,12 @@ export default class Strategy extends React.Component<any, StrategyState> {
         if (!this.context) return;
 
         Server.get('strategy', this.context.id).then((data) => {
+            if (!data.nodes || !data.edges) {
+                this.setState({
+                    loading: false
+                });
+                return;
+            }
             const nodes = data.nodes.map((node: any) => {
                 return {
                     ...nodeDefaults,
@@ -296,7 +331,8 @@ export default class Strategy extends React.Component<any, StrategyState> {
                 nodes: nodes,
                 edges: data.edges,
                 loading: false,
-                viewport: data.viewport
+                viewport: data.viewport,
+                timeframe: data.timeframe || "1d"
             });
         });
     }
@@ -316,7 +352,8 @@ export default class Strategy extends React.Component<any, StrategyState> {
         const data = {
             nodes: nodes,
             edges: this.state.edges,
-            viewport: this.state.viewport
+            viewport: this.state.viewport,
+            timeframe: this.state.timeframe
         };
 
         Server.update('strategy', this.context.id, data).then(() => {

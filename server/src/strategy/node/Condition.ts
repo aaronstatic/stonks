@@ -9,7 +9,16 @@ export default class ConditionNode extends BaseNode {
             value = value[value.length - 1];
         }
 
-        const valueTest = params.value as number;
+        let valueTest = params.testvalue as number;
+        if (inputs.testvalue) {
+            if (Array.isArray(inputs.testvalue)) {
+                valueTest = inputs.testvalue[inputs.testvalue.length - 1] as number;
+            } else {
+                valueTest = inputs.testvalue as number;
+            }
+
+            valueTest = inputs.testvalue as number;
+        }
 
         let result = false;
         switch (condition) {

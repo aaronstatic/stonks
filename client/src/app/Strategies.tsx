@@ -10,11 +10,6 @@ class Strategies extends CRUDList {
     onOpen = (id: string) => {
         this.openObject(id);
     }
-    renderForm = () => {
-        return (
-            <div></div>
-        )
-    }
 }
 
 export default Strategies;

@@ -95,12 +95,19 @@ export async function getLatestStockCandle(ticker: string): Promise<any> {
 
 export async function getStockDayChangeCandle(ticker: string, date: string = ""): Promise<{ today: any, yesterday: any } | null> {
     //get previous two candles
+    let useLatest = false;
     if (date == "") {
+        useLatest = true;
         date = DateTime.now().setZone("UTC").toISODate() || "";
     }
 
     const todayDate = DateTime.fromISO(date + "T00:00:00.000Z").setZone("UTC");
-    const todayCandle = await getStockDayCandle(ticker, todayDate.toISODate() || "");
+    let todayCandle;
+    if (useLatest) {
+        todayCandle = await getLatestStockCandle(ticker);
+    } else {
+        todayCandle = await getStockDayCandle(ticker, todayDate.toISODate() || "");
+    }
 
     if (!todayCandle) return null;
 

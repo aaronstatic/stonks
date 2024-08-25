@@ -5,12 +5,22 @@ import BaseNode, { Inputs, Outputs } from "../strategy/node/BaseNode";
 import ConditionNode from "../strategy/node/Condition";
 import ContextNode from "../strategy/node/Context";
 import RSINode from "../strategy/node/RSI";
+import EMANode from "../strategy/node/EMA";
+import NotifyNode from "../strategy/node/Notify";
+import BooleanNode from "../strategy/node/Boolean";
+import HawkesVolatilityNode from "../strategy/node/HawkesVolatility";
+import trendingSymbols from "yahoo-finance2/dist/esm/src/modules/insights";
+import StochasticRSINode from "../strategy/node/StochasticRSI";
 
 const nodes: { [type: string]: typeof BaseNode } = {
     "context": ContextNode,
     "rsi": RSINode,
     "condition": ConditionNode,
-    "notify": BaseNode
+    "notify": NotifyNode,
+    "ema": EMANode,
+    "boolean": BooleanNode,
+    "hawkes": HawkesVolatilityNode,
+    "stochasticrsi": StochasticRSINode
 }
 
 type Edge = {
@@ -75,9 +85,21 @@ function processNode(node: Node, inputs: Inputs, context: any): Outputs {
 export default async function updateStrategies(now: DateTime): Promise<boolean> {
     const collection = db.collection("strategy");
     const watchlist = db.collection("watchlist");
+    const lastRunCollection = db.collection("strategy-lastrun");
     const strategies = await collection.find().toArray();
 
+    //clear last run
+    await lastRunCollection.deleteMany({});
+
     now = now.setZone("America/New_York");
+    if (now.weekday > 5) {
+        //skip weekends
+        return true;
+    }
+    if (now.hour < 4 || now.hour > 20) {
+        //skip off hours
+        return true;
+    }
 
     for (const strategy of strategies) {
         if (!strategy.nodes || !strategy.edges) {
@@ -117,12 +139,20 @@ export default async function updateStrategies(now: DateTime): Promise<boolean> 
             let limit = 300;
             const candles = await db.collection(`stocks-${timeframe}`).find({ ticker: ticker }).sort({ timestamp: -1 }).limit(limit).toArray();
             candles.reverse();
+            const lastCandle = candles[candles.length - 1];
+
             let context: { [key: string]: any } = {
                 ticker,
-                Candles: candles
+                Candles: candles,
+                Open: lastCandle.open,
+                Close: lastCandle.close,
+                High: lastCandle.high,
+                Low: lastCandle.low,
+                Volume: lastCandle.volume
             };
 
             const nodeOutputs: Record<string, any> = {};
+            const nodeInputs: Record<string, any> = {};
 
             for (const node of sortedNodes) {
                 const inputs: { [key: string]: any } = {};
@@ -133,17 +163,27 @@ export default async function updateStrategies(now: DateTime): Promise<boolean> 
                         if (!sourceOutput) {
                             continue;
                         }
-                        if (!sourceOutput[edge.sourceHandle]) {
+                        if (sourceOutput[edge.sourceHandle] === undefined) {
                             continue;
                         }
-
                         inputs[edge.targetHandle] = sourceOutput[edge.sourceHandle];
                     }
                 }
-
+                nodeInputs[node.id] = inputs;
                 const output = processNode(node, inputs, context);
                 nodeOutputs[node.id] = output;
             }
+
+            const lastRun = {
+                strategy: strategy.name,
+                ticker,
+                timestamp: now.toJSDate(),
+                inputs: nodeInputs,
+                outputs: nodeOutputs,
+                nodes: sortedNodes
+            };
+
+            await lastRunCollection.insertOne(lastRun);
         }
 
     }

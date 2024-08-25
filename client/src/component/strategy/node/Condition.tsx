@@ -1,9 +1,11 @@
+import { Handle, Position } from '@xyflow/react';
 import { BaseNode, NodeData } from './BaseNode';
 import { Form, InputNumber, InputPicker } from 'rsuite';
+import InputHandle from '../InputHandle';
 
 type ConditionNodeData = NodeData & {
     type: string,
-    value: number
+    testvalue: number
 };
 
 export default class RSINode extends BaseNode<ConditionNodeData> {
@@ -12,7 +14,7 @@ export default class RSINode extends BaseNode<ConditionNodeData> {
     defaultValues = {
         name: "Condition",
         type: ">",
-        value: 0
+        testvalue: 0
     }
 
     inputs = [{
@@ -48,12 +50,14 @@ export default class RSINode extends BaseNode<ConditionNodeData> {
                 />
             </Form.Group>
             <Form.Group>
-                <Form.ControlLabel>Value</Form.ControlLabel>
-                <InputNumber
-                    name="value"
-                    value={data.value}
-                    onChange={v => this.onChange('value', v)}
-                />
+                <Form.ControlLabel>Test Value</Form.ControlLabel>
+                <InputHandle id="testvalue">
+                    <InputNumber
+                        name="testvalue"
+                        value={data.testvalue}
+                        onChange={v => this.onChange('testvalue', v)}
+                    />
+                </InputHandle>
             </Form.Group>
         </>
     }

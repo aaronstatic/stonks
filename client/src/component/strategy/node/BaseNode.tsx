@@ -98,6 +98,7 @@ export type StrategyNodeProps = {
 type InputOutput = {
     name: string
     type: string
+    id?: string
 }
 
 export class BaseNode<Type extends NodeData> extends React.Component<StrategyNodeProps> {
@@ -137,7 +138,7 @@ export class BaseNode<Type extends NodeData> extends React.Component<StrategyNod
                             <Handle
                                 type="target"
                                 position={Position.Left}
-                                id={input.name}
+                                id={input.id || input.name}
                             />
                             <InputLabel>{input.name}</InputLabel>
                         </HandleWrapper>
@@ -153,7 +154,7 @@ export class BaseNode<Type extends NodeData> extends React.Component<StrategyNod
                             <Handle
                                 type="source"
                                 position={Position.Right}
-                                id={output.name}
+                                id={output.id || output.name}
                             />
                         </HandleWrapper>
                     )
