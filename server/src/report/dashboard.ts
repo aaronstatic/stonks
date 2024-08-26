@@ -236,7 +236,7 @@ export default async function dashboard(owner: string = "", params: any = {}): P
         mainCurrency: currency,
         today: dayTotal,
         holdings,
-        risk: risk / totalValue,
+        risk: (risk / totalValue) || 0,
         unrealized: totalUnrealized,
         realizedfy: totalRealized,
         totalValue,

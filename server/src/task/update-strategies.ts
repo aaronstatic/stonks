@@ -105,6 +105,7 @@ export default async function updateStrategies(now: DateTime): Promise<boolean> 
     }
 
     for (const strategy of strategies) {
+        const applyTo = strategy.applyTo || "All";
         if (!strategy.nodes || !strategy.edges) {
             continue;
         }
@@ -150,29 +151,32 @@ export default async function updateStrategies(now: DateTime): Promise<boolean> 
 
         const sortedNodes = topologicalSort(nodes, edges);
 
-        for (const ticker of stocks) {
-            console.log(`Processing strategy ${strategy.name} for ${ticker} on ${timeframe} timeframe`);
-            let limit = 300;
-            const candles = await db.collection(`stocks-${timeframe}`).find({ ticker: ticker }).sort({ timestamp: -1 }).limit(limit).toArray();
-            candles.reverse();
+        if (applyTo === "All" || applyTo === "Stocks") {
+            for (const ticker of stocks) {
+                console.log(`Processing strategy ${strategy.name} for ${ticker} on ${timeframe} timeframe`);
+                let limit = 300;
+                const candles = await db.collection(`stocks-${timeframe}`).find({ ticker: ticker }).sort({ timestamp: -1 }).limit(limit).toArray();
+                candles.reverse();
 
-            await runStrategy(now, strategy.name, ticker, sortedNodes, edges, candles);
-        }
-
-        const cryptos: string[] = [];
-        for (const item of watchlistItems) {
-            if (item.type != "Crypto") continue;
-            if (!cryptos.includes(item.ticker)) {
-                cryptos.push(item.ticker);
+                await runStrategy(now, strategy.name, ticker, sortedNodes, edges, candles);
             }
         }
-        for (const crypto of cryptos) {
-            console.log(`Processing strategy ${strategy.name} for ${crypto} on ${timeframe} timeframe`);
-            let limit = 300;
-            const candles = await db.collection(`crypto-${timeframe}`).find({ ticker: crypto }).sort({ timestamp: -1 }).limit(limit).toArray();
-            candles.reverse();
+        if (applyTo === "All" || applyTo === "Crypto") {
+            const cryptos: string[] = [];
+            for (const item of watchlistItems) {
+                if (item.type != "Crypto") continue;
+                if (!cryptos.includes(item.ticker)) {
+                    cryptos.push(item.ticker);
+                }
+            }
+            for (const crypto of cryptos) {
+                console.log(`Processing strategy ${strategy.name} for ${crypto} on ${timeframe} timeframe`);
+                let limit = 300;
+                const candles = await db.collection(`crypto-${timeframe}`).find({ ticker: crypto }).sort({ timestamp: -1 }).limit(limit).toArray();
+                candles.reverse();
 
-            await runStrategy(now, strategy.name, crypto, sortedNodes, edges, candles);
+                await runStrategy(now, strategy.name, crypto, sortedNodes, edges, candles);
+            }
         }
 
     }

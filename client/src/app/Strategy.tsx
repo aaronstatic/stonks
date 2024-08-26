@@ -88,7 +88,8 @@ type StrategyState = {
     showAddNode: boolean,
     addNodePosition: { x: number, y: number },
     viewport: { x: number, y: number, zoom: number }
-    timeframe: string
+    timeframe: string,
+    applyTo: string
 };
 
 type NodeType = ComponentType<NodeProps & {
@@ -145,6 +146,7 @@ export default class Strategy extends React.Component<any, StrategyState> {
             nodes: initialNodes,
             edges: initialEdges,
             timeframe: '1d',
+            applyTo: 'All',
             showAddNode: false,
             addNodePosition: { x: 0, y: 0 },
             viewport: { x: 0, y: 0, zoom: 1 }
@@ -187,6 +189,17 @@ export default class Strategy extends React.Component<any, StrategyState> {
                         ]}
                         value={this.state.timeframe}
                         onChange={v => this.setState({ timeframe: v })}
+                    />
+                    <InputPicker
+                        name="applyTo"
+                        cleanable={false}
+                        data={[
+                            { label: 'Stocks', value: 'Stocks' },
+                            { label: 'Crypto', value: 'Crypto' },
+                            { label: 'All', value: 'All' }
+                        ]}
+                        value={this.state.applyTo}
+                        onChange={v => this.setState({ applyTo: v })}
                     />
                 </Toolbar>
                 <Flow>
@@ -336,7 +349,8 @@ export default class Strategy extends React.Component<any, StrategyState> {
                 edges: data.edges,
                 loading: false,
                 viewport: data.viewport,
-                timeframe: data.timeframe || "1d"
+                timeframe: data.timeframe || "1d",
+                applyTo: data.applyTo || "All"
             });
         });
     }
@@ -357,7 +371,8 @@ export default class Strategy extends React.Component<any, StrategyState> {
             nodes: nodes,
             edges: this.state.edges,
             viewport: this.state.viewport,
-            timeframe: this.state.timeframe
+            timeframe: this.state.timeframe,
+            applyTo: this.state.applyTo
         };
 
         Server.update('strategy', this.context.id, data).then(() => {
