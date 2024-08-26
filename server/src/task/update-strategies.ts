@@ -9,8 +9,10 @@ import EMANode from "../strategy/node/EMA";
 import NotifyNode from "../strategy/node/Notify";
 import BooleanNode from "../strategy/node/Boolean";
 import HawkesVolatilityNode from "../strategy/node/HawkesVolatility";
-import trendingSymbols from "yahoo-finance2/dist/esm/src/modules/insights";
 import StochasticRSINode from "../strategy/node/StochasticRSI";
+import MathNode from "../strategy/node/MathNode";
+import { getOpenStockHoldings } from "../lib/stocks";
+import { Candle } from "@schema/report/candles";
 
 const nodes: { [type: string]: typeof BaseNode } = {
     "context": ContextNode,
@@ -20,7 +22,8 @@ const nodes: { [type: string]: typeof BaseNode } = {
     "ema": EMANode,
     "boolean": BooleanNode,
     "hawkes": HawkesVolatilityNode,
-    "stochasticrsi": StochasticRSINode
+    "stochasticrsi": StochasticRSINode,
+    "math": MathNode
 }
 
 type Edge = {
@@ -122,7 +125,20 @@ export default async function updateStrategies(now: DateTime): Promise<boolean> 
 
         const owner = strategy.owner;
         const watchlistItems = await watchlist.find({ owner }).toArray();
-        const stocks = watchlistItems.map(item => item.ticker);
+        const stocks: string[] = [];
+        for (const item of watchlistItems) {
+            if (item.type == "Crypto") continue;
+            if (!stocks.includes(item.ticker)) {
+                stocks.push(item.ticker);
+            }
+        }
+
+        const openHoldings = await getOpenStockHoldings(owner);
+        for (const holding of openHoldings) {
+            if (!stocks.includes(holding.ticker)) {
+                stocks.push(holding.ticker);
+            }
+        }
 
         const nodes = strategy.nodes as Node[];
         const edges = strategy.edges as Edge[];
@@ -139,54 +155,76 @@ export default async function updateStrategies(now: DateTime): Promise<boolean> 
             let limit = 300;
             const candles = await db.collection(`stocks-${timeframe}`).find({ ticker: ticker }).sort({ timestamp: -1 }).limit(limit).toArray();
             candles.reverse();
-            const lastCandle = candles[candles.length - 1];
 
-            let context: { [key: string]: any } = {
-                ticker,
-                Candles: candles,
-                Open: lastCandle.open,
-                Close: lastCandle.close,
-                High: lastCandle.high,
-                Low: lastCandle.low,
-                Volume: lastCandle.volume
-            };
+            await runStrategy(now, strategy.name, ticker, sortedNodes, edges, candles);
+        }
 
-            const nodeOutputs: Record<string, any> = {};
-            const nodeInputs: Record<string, any> = {};
-
-            for (const node of sortedNodes) {
-                const inputs: { [key: string]: any } = {};
-
-                for (const edge of edges) {
-                    if (edge.target === node.id) {
-                        const sourceOutput = nodeOutputs[edge.source];
-                        if (!sourceOutput) {
-                            continue;
-                        }
-                        if (sourceOutput[edge.sourceHandle] === undefined) {
-                            continue;
-                        }
-                        inputs[edge.targetHandle] = sourceOutput[edge.sourceHandle];
-                    }
-                }
-                nodeInputs[node.id] = inputs;
-                const output = processNode(node, inputs, context);
-                nodeOutputs[node.id] = output;
+        const cryptos: string[] = [];
+        for (const item of watchlistItems) {
+            if (item.type != "Crypto") continue;
+            if (!cryptos.includes(item.ticker)) {
+                cryptos.push(item.ticker);
             }
+        }
+        for (const crypto of cryptos) {
+            console.log(`Processing strategy ${strategy.name} for ${crypto} on ${timeframe} timeframe`);
+            let limit = 300;
+            const candles = await db.collection(`crypto-${timeframe}`).find({ ticker: crypto }).sort({ timestamp: -1 }).limit(limit).toArray();
+            candles.reverse();
 
-            const lastRun = {
-                strategy: strategy.name,
-                ticker,
-                timestamp: now.toJSDate(),
-                inputs: nodeInputs,
-                outputs: nodeOutputs,
-                nodes: sortedNodes
-            };
-
-            await lastRunCollection.insertOne(lastRun);
+            await runStrategy(now, strategy.name, crypto, sortedNodes, edges, candles);
         }
 
     }
 
     return true;
+}
+
+async function runStrategy(now: DateTime, name: string, ticker: string, sortedNodes: Node[], edges: Edge[], candles: any[]) {
+    const lastRunCollection = db.collection("strategy-lastrun");
+    const lastCandle = candles[candles.length - 1];
+
+    let context: { [key: string]: any } = {
+        ticker,
+        Candles: candles,
+        Open: lastCandle.open,
+        Close: lastCandle.close,
+        High: lastCandle.high,
+        Low: lastCandle.low,
+        Volume: lastCandle.volume
+    };
+
+    const nodeOutputs: Record<string, any> = {};
+    const nodeInputs: Record<string, any> = {};
+
+    for (const node of sortedNodes) {
+        const inputs: { [key: string]: any } = {};
+
+        for (const edge of edges) {
+            if (edge.target === node.id) {
+                const sourceOutput = nodeOutputs[edge.source];
+                if (!sourceOutput) {
+                    continue;
+                }
+                if (sourceOutput[edge.sourceHandle] === undefined) {
+                    continue;
+                }
+                inputs[edge.targetHandle] = sourceOutput[edge.sourceHandle];
+            }
+        }
+        nodeInputs[node.id] = inputs;
+        const output = processNode(node, inputs, context);
+        nodeOutputs[node.id] = output;
+    }
+
+    const lastRun = {
+        strategy: name,
+        ticker,
+        timestamp: now.toJSDate(),
+        inputs: nodeInputs,
+        outputs: nodeOutputs,
+        nodes: sortedNodes
+    };
+
+    await lastRunCollection.insertOne(lastRun);
 }

@@ -1,4 +1,3 @@
-import { Handle, Position } from '@xyflow/react';
 import { BaseNode, NodeData } from './BaseNode';
 import { Form, InputNumber, InputPicker } from 'rsuite';
 import InputHandle from '../InputHandle';

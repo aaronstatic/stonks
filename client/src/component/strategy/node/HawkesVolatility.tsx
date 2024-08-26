@@ -32,6 +32,9 @@ export default class HawkesVolatilityNode extends BaseNode<HawkesVolatilityNodeD
         name: 'Quantile05',
         type: 'number'
     }, {
+        name: 'ATR',
+        type: 'number'
+    }, {
         name: 'CrossUp',
         type: 'trigger'
     }, {

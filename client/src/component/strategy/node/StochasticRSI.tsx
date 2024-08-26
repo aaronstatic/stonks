@@ -25,8 +25,17 @@ export default class StochasticRSINode extends BaseNode<StochasticRSINodeData> {
     }]
 
     outputs = [{
-        name: 'RSI',
+        name: 'K',
         type: 'number'
+    }, {
+        name: 'D',
+        type: 'number'
+    }, {
+        name: 'CrossUp',
+        type: 'trigger'
+    }, {
+        name: 'CrossDown',
+        type: 'trigger'
     }]
 
     renderForm(data: StochasticRSINodeData) {

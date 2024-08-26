@@ -34,6 +34,7 @@ import StochasticRSINode from '../component/strategy/node/StochasticRSI';
 import EMANode from '../component/strategy/node/EMA';
 import BooleanNode from '../component/strategy/node/Boolean';
 import HawkesVolatilityNode from '../component/strategy/node/HawkesVolatility';
+import MathNode from '../component/strategy/node/Math';
 
 const Wrapper = styled.div`
     display: flex;
@@ -118,6 +119,9 @@ const nodeTypes: NodeDef[] = [{
 }, {
     type: 'condition',
     Component: ConditionNode
+}, {
+    type: 'math',
+    Component: MathNode
 }, {
     type: 'notify',
     Component: NotifyNode

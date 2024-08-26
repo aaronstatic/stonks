@@ -36,7 +36,9 @@ export async function getOpenCryptoHoldings(owner: string = "", toDate: string =
                 break;
             }
         }
-        if (quantity > 0) {
+        const price = await getCryptoPrice(holding.ticker, toDate);
+        const value = price * quantity;
+        if (value > 1) {
             openHoldings.push(holding);
         }
     }

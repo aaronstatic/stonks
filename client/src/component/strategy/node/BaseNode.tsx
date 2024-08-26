@@ -1,6 +1,6 @@
 import { Handle, Position } from '@xyflow/react';
 import React from 'react';
-import { Form } from 'rsuite';
+import { Form, InlineEdit } from 'rsuite';
 import styled from 'styled-components';
 import Icon from '../../Icon';
 
@@ -122,7 +122,9 @@ export class BaseNode<Type extends NodeData> extends React.Component<StrategyNod
 
         return <Wrapper className={this.props.selected ? "selected" : ""}>
             <Header className="header">
-                <NodeName>{data.name}</NodeName>
+                <NodeName><InlineEdit defaultValue={data.name} onChange={(v) => {
+                    this.onChange('name', v);
+                }} /></NodeName>
                 {this.props.selected && (
                     <RemoveButton onClick={() => this.props.onChangeData(this.props.id, 'remove', true)}>
                         <Icon name="remove_circle_outline" />

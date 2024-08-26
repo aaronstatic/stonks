@@ -1,5 +1,5 @@
 import CRUDTable from "../component/CRUDTable";
-import { Form, Table } from "rsuite";
+import { Form, InputPicker, Table } from "rsuite";
 import { WatchlistReportItem } from "@schema/report/watchlist";
 import { JSX } from "react/jsx-runtime";
 import Server from "../lib/Server";
@@ -136,6 +136,19 @@ class Watchlist extends CRUDTable {
                 <Form.Group controlId="ticker">
                     <Form.ControlLabel>Ticker</Form.ControlLabel>
                     <Form.Control name="ticker" value={watchlistItem?.ticker} onChange={(v) => this.onFieldChange("ticker", v)} />
+                </Form.Group>
+                <Form.Group controlId="name">
+                    <Form.ControlLabel>Type</Form.ControlLabel>
+                    <InputPicker
+                        name="type"
+                        value={watchlistItem?.type}
+                        onChange={(v) => this.onFieldChange("type", v)}
+                        cleanable={false}
+                        data={[
+                            { label: 'Stock', value: 'Stock' },
+                            { label: 'Crypto', value: 'Crypto' }
+                        ]}
+                    />
                 </Form.Group>
             </>
         );

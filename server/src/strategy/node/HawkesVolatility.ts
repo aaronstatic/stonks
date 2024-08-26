@@ -1,6 +1,7 @@
 import { Candle } from "@schema/report/candles";
 import BaseNode, { Inputs, Outputs, Params } from "./BaseNode";
 import HawkesVolatility from "../../lib/indicator/HawkesVolatility";
+import ATR from "../../lib/indicator/ATR";
 
 export default class HawkesVolatilityNode extends BaseNode {
     process(params: Params, inputs: Inputs, context: Inputs): Outputs {
@@ -27,6 +28,7 @@ export default class HawkesVolatilityNode extends BaseNode {
             Hawkes: hawkes.map((h) => h.hawkes),
             Quantile95: hawkes.map((h) => h.quantile95),
             Quantile05: hawkes.map((h) => h.quantile05),
+            ATR: hawkes.map((h) => h.atr),
             CrossUp: crossUp,
             CrossDown: crossDown
         }

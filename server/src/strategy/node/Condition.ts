@@ -16,8 +16,6 @@ export default class ConditionNode extends BaseNode {
             } else {
                 valueTest = inputs.testvalue as number;
             }
-
-            valueTest = inputs.testvalue as number;
         }
 
         let result = false;

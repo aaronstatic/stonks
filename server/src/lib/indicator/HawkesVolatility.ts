@@ -5,7 +5,8 @@ import { DateTime } from "luxon";
 type HawkesResult = {
     hawkes: number,
     quantile95: number,
-    quantile05: number
+    quantile05: number,
+    atr: number
 }
 
 function hawkesProcess(current: number, previous: number, kappa: number): number {
@@ -51,7 +52,8 @@ export default function HawkesVolatility(candles: Candle[], kappa: number, atrLe
         results.push({
             hawkes,
             quantile95,
-            quantile05
+            quantile05,
+            atr: atrValue
         });
     }
 
