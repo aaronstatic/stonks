@@ -1,4 +1,4 @@
-import { BaseNode, NodeData } from './BaseNode';
+import { BaseNode, NodeData, ValueType } from './BaseNode';
 import { Form, InputNumber, InputPicker } from 'rsuite';
 import InputHandle from '../InputHandle';
 
@@ -16,18 +16,27 @@ export default class RSINode extends BaseNode<ConditionNodeData> {
         testvalue: 0
     }
 
-    inputs = [{
+    static inputs = [{
         name: 'Value',
-        type: 'number'
+        type: ValueType.number
     }]
 
-    outputs = [{
+    static outputs = [{
         name: 'True',
-        type: 'trigger'
+        type: ValueType.trigger
     }, {
         name: 'False',
-        type: 'trigger'
+        type: ValueType.trigger
     }]
+
+    static formInputs = [{
+        name: 'testvalue',
+        type: ValueType.number
+    }]
+
+    inputs = RSINode.inputs;
+    outputs = RSINode.outputs;
+    formInputs = RSINode.formInputs;
 
     renderForm(data: ConditionNodeData) {
         return <>
@@ -50,7 +59,11 @@ export default class RSINode extends BaseNode<ConditionNodeData> {
             </Form.Group>
             <Form.Group>
                 <Form.ControlLabel>Test Value</Form.ControlLabel>
-                <InputHandle id="testvalue">
+                <InputHandle
+                    id="testvalue"
+                    parentId={this.props.id}
+                    valueType={ValueType.number}
+                >
                     <InputNumber
                         name="testvalue"
                         value={data.testvalue}

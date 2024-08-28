@@ -1,4 +1,4 @@
-import { BaseNode, NodeData } from './BaseNode';
+import { BaseNode, NodeData, ValueType } from './BaseNode';
 import { Form, InputNumber } from 'rsuite';
 
 type EMANodeData = NodeData & {
@@ -13,15 +13,18 @@ export default class EMANode extends BaseNode<EMANodeData> {
         length: 50
     }
 
-    inputs = [{
+    static inputs = [{
         name: 'Candles',
-        type: 'candles'
+        type: ValueType.candles
     }]
 
-    outputs = [{
+    static outputs = [{
         name: 'EMA',
-        type: 'number'
+        type: ValueType.numberstream
     }]
+
+    inputs = EMANode.inputs;
+    outputs = EMANode.outputs;
 
     renderForm(data: EMANodeData) {
         return <>

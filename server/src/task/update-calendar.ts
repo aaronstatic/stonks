@@ -43,7 +43,7 @@ export default async function updateCalendar(now: DateTime): Promise<boolean> {
         }
 
         if (gotEventsAU) {
-            await sendNotification(todayEventTextAU, 1);
+            await sendNotification(todayEventTextAU);
         }
     }
 
@@ -90,7 +90,7 @@ export default async function updateCalendar(now: DateTime): Promise<boolean> {
         }
 
         if (gotEvents) {
-            await sendNotification(todayEventText, 1);
+            await sendNotification(todayEventText);
 
             await sendToDiscord({
                 cmd: "msg",

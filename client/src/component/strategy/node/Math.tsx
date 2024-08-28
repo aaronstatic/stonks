@@ -1,4 +1,4 @@
-import { BaseNode, NodeData } from './BaseNode';
+import { BaseNode, NodeData, ValueType } from './BaseNode';
 import { Form, InputNumber, InputPicker } from 'rsuite';
 import InputHandle from '../InputHandle';
 
@@ -16,15 +16,24 @@ export default class MathNode extends BaseNode<MathNodeData> {
         secondvalue: 0
     }
 
-    inputs = [{
+    static inputs = [{
         name: 'Value',
-        type: 'number'
+        type: ValueType.number
     }]
 
-    outputs = [{
+    static outputs = [{
         name: 'Result',
-        type: 'number'
+        type: ValueType.number
     }]
+
+    static formInputs = [{
+        name: 'secondvalue',
+        type: ValueType.number
+    }]
+
+    inputs = MathNode.inputs;
+    outputs = MathNode.outputs;
+    formInputs = MathNode.formInputs;
 
     renderForm(data: MathNodeData) {
         return <>
@@ -47,7 +56,7 @@ export default class MathNode extends BaseNode<MathNodeData> {
             </Form.Group>
             <Form.Group>
                 <Form.ControlLabel>Value</Form.ControlLabel>
-                <InputHandle id="secondvalue">
+                <InputHandle id="secondvalue" parentId={this.props.id} valueType={ValueType.number}>
                     <InputNumber
                         name="secondvalue"
                         value={data.secondvalue}

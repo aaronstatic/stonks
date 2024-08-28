@@ -1,4 +1,4 @@
-import { BaseNode, NodeData } from './BaseNode';
+import { BaseNode, NodeData, ValueType } from './BaseNode';
 import { Form, Input, InputPicker } from 'rsuite';
 
 type NotifyNodeData = NodeData & {
@@ -15,10 +15,12 @@ export default class RSINode extends BaseNode<NotifyNodeData> {
         message: "${ticker} has triggered a condition"
     }
 
-    inputs = [{
+    static inputs = [{
         name: 'Trigger',
-        type: 'trigger'
+        type: ValueType.trigger
     }]
+
+    inputs = RSINode.inputs;
 
     renderForm(data: NotifyNodeData) {
         return <>

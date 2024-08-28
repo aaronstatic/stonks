@@ -1,8 +1,8 @@
-import { Handle, Position } from '@xyflow/react';
 import React from 'react';
 import { Form, InlineEdit } from 'rsuite';
 import styled from 'styled-components';
 import Icon from '../../Icon';
+import NodeHandle from '../NodeHandle';
 
 const Wrapper = styled.div`
     background-color: var(--rs-gray-700);
@@ -84,6 +84,14 @@ const OutputLabel = styled.div`
     text-align: right;
 `
 
+export enum ValueType {
+    number = 'number',
+    trigger = 'trigger',
+    candles = 'candles',
+    string = 'string',
+    numberstream = 'numberstream',
+}
+
 export type NodeData = {
     name: string
 }
@@ -97,15 +105,21 @@ export type StrategyNodeProps = {
 
 type InputOutput = {
     name: string
-    type: string
+    type: ValueType
     id?: string
 }
 
 export class BaseNode<Type extends NodeData> extends React.Component<StrategyNodeProps> {
     static displayName = "BaseNode"
 
+    static inputs: InputOutput[] = []
+    static outputs: InputOutput[] = []
+    static formInputs: InputOutput[] = []
+
     inputs: InputOutput[] = []
     outputs: InputOutput[] = []
+    formInputs: InputOutput[] = []
+
     defaultValues: Type = {} as Type
 
     getData(): Type {
@@ -113,6 +127,8 @@ export class BaseNode<Type extends NodeData> extends React.Component<StrategyNod
     }
 
     render() {
+
+
         const data = this.props.data as Type;
         for (const key in this.defaultValues) {
             if (data[key] === undefined) {
@@ -137,9 +153,10 @@ export class BaseNode<Type extends NodeData> extends React.Component<StrategyNod
                 {this.inputs.map(input => {
                     return (
                         <HandleWrapper key={input.name}>
-                            <Handle
+                            <NodeHandle
+                                valueType={input.type}
                                 type="target"
-                                position={Position.Left}
+                                parentId={this.props.id}
                                 id={input.id || input.name}
                             />
                             <InputLabel>{input.name}</InputLabel>
@@ -153,9 +170,10 @@ export class BaseNode<Type extends NodeData> extends React.Component<StrategyNod
                     return (
                         <HandleWrapper key={output.name}>
                             <OutputLabel>{output.name}</OutputLabel>
-                            <Handle
+                            <NodeHandle
+                                valueType={output.type}
                                 type="source"
-                                position={Position.Right}
+                                parentId={this.props.id}
                                 id={output.id || output.name}
                             />
                         </HandleWrapper>

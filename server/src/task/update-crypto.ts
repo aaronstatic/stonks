@@ -43,14 +43,14 @@ async function updateCandles(ticker: string, timeframe: string) {
     const symbol = ticker + 'USDT';
 
     const last = await collection.findOne({ ticker: ticker }, { sort: { timestamp: -1 } });
-    let earliest: DateTimeUnit = "year";
+    let earliest: DateTime = DateTime.now().minus({ years: 1 });
     if (timeframe == '1h') {
-        earliest = "month";
+        earliest = DateTime.now().minus({ days: 30 });
     }
     if (timeframe == '15m') {
-        earliest = "week";
+        earliest = DateTime.now().minus({ days: 7 });
     }
-    const lastTimestamp = last ? DateTime.fromISO(last.timestamp) : DateTime.now().startOf(earliest);
+    const lastTimestamp = last ? DateTime.fromISO(last.timestamp) : earliest;
     const now = DateTime.now().endOf('day');
 
     console.log("Updating", symbol, "from", lastTimestamp.toISO(), "to", now.toISO());

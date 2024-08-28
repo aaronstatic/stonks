@@ -62,15 +62,21 @@ async function stockHolding(holding: Holding, toDateDT: DateTime): Promise<Holdi
     const todayCandle = await getStockDayCandle(holding.ticker, toDateDT.toISODate() || "", false);
 
     const price = await getStockPrice(holding.ticker, toDateDT.toISODate() || "");
+    let qtyToday = 0;
 
     for (const trade of trades) {
-        const time = DateTime.fromISO(trade.timestamp);
+        const time = DateTime.fromISO(trade.timestamp).toUTC();
         if (time > toDateDT) {
             break;
         }
         if (trade.type === 'BUY') {
             quantity += trade.quantity;
             cost += (trade.price * trade.quantity) + trade.fees;
+            if (time > startOfDay && time < endOfDay && todayCandle) {
+                const sinceChange = todayCandle.close - trade.price;
+                today += trade.quantity * sinceChange;
+                qtyToday += trade.quantity;
+            }
         } else {
             if (time > startOfFinancialYear && time < endOfFinancialYear) {
                 realizedfy += (trade.price * trade.quantity) - (averageOpenPrice * trade.quantity);
@@ -86,7 +92,7 @@ async function stockHolding(holding: Holding, toDateDT: DateTime): Promise<Holdi
         averageOpenPrice = cost / quantity;
     }
 
-    today += quantity * dayChange;
+    today += (quantity - qtyToday) * dayChange;
 
     let holdingType = holding.type;
     if (bondStocks.includes(holding.ticker)) {
@@ -221,6 +227,7 @@ async function cryptoHolding(holding: Holding, toDateDT: DateTime): Promise<Hold
     let startOfFinancialYear = toDateDT.minus({ years: 1 }).set({ month: 7, day: 1 }).startOf('day');
     if (startOfDay.month >= 7) startOfFinancialYear = toDateDT.set({ month: 7, day: 1 }).startOf('day');
     const endOfFinancialYear = startOfFinancialYear.plus({ years: 1 }).minus({ days: 1 }).endOf('day');
+    let qtyToday = 0;
 
     for (const trade of trades) {
         const time = DateTime.fromISO(trade.timestamp);
@@ -230,6 +237,11 @@ async function cryptoHolding(holding: Holding, toDateDT: DateTime): Promise<Hold
         if (trade.type === 'BUY') {
             quantity += trade.quantity - trade.qtyFees;
             cost += (trade.price * trade.quantity) + trade.fees;
+            if (time > startOfDay && time < endOfDay && todayCandle) {
+                const sinceChange = todayCandle.close - trade.price;
+                today += trade.quantity * sinceChange;
+                qtyToday += trade.quantity;
+            }
         } else {
             if (time > startOfFinancialYear && time < endOfFinancialYear) {
                 realizedfy += (trade.price * trade.quantity) - (averageOpenPrice * trade.quantity);
@@ -261,7 +273,7 @@ async function cryptoHolding(holding: Holding, toDateDT: DateTime): Promise<Hold
     const costMainCurrency = exchangeRate * cost;
     const valueMainCurrency = quantity * price * exchangeRate;
 
-    today += quantity * dayChange;
+    today += (quantity - qtyToday) * dayChange;
     today = exchangeRate * today;
 
     const value = quantity * price;
@@ -362,6 +374,7 @@ async function optionHolding(option: Option, toDateDT: DateTime): Promise<Holdin
     const endOfFinancialYear = startOfFinancialYear.plus({ years: 1 }).minus({ days: 1 }).endOf('day');
 
     const dayChange = await getOptionDayChange(option._id, toDateDT.toISODate() || "");
+    let qtyToday = 0;
 
     let multi = "";
     for (const trade of trades) {
@@ -375,6 +388,11 @@ async function optionHolding(option: Option, toDateDT: DateTime): Promise<Holdin
         if (trade.type === 'BUY') {
             quantity += trade.quantity;
             cost += (trade.price * trade.quantity) + (trade.fees / 100);
+            if (time > startOfDay && time < endOfDay && todayCandle) {
+                const sinceChange = todayCandle.close - trade.price;
+                today += trade.quantity * sinceChange * 100;
+                qtyToday += trade.quantity;
+            }
         } else {
             if (time > startOfFinancialYear && time < endOfFinancialYear) {
                 realizedfy += (trade.price * trade.quantity) - (averageOpenPrice * trade.quantity);
@@ -404,7 +422,7 @@ async function optionHolding(option: Option, toDateDT: DateTime): Promise<Holdin
     let price = await getOptionPrice(option._id, toDateDT.toISODate() || "");
     if (quantity < 0) price = -price;
 
-    today += quantity * dayChange * 100;
+    today += (quantity - qtyToday) * dayChange * 100;
 
     if (!price || price == 0) price = averageOpenPrice;
 

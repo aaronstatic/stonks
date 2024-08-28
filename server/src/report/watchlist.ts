@@ -2,7 +2,7 @@ import { WatchlistReportItem } from '@schema/report/watchlist';
 
 import db from '../lib/mongo';
 import { DateTime } from 'luxon';
-import { getLatestStockCandle, getNextExpiryGammaZone, getStockDayChangeCandle, getStockPrice } from '../lib/stocks';
+import { getLatestStockCandle, getNextExpiryGammaZone, getStockDayCandle, getStockDayChangeCandle, getStockPrice } from '../lib/stocks';
 import { calculateDCF, findImpliedRate } from '../lib/dcf';
 import { getCryptoDayCandle, getCryptoPrice } from '../lib/crypto';
 
@@ -16,11 +16,15 @@ export default async function watchlist(owner: string = '', params: any = {}): P
     for (const doc of docs) {
         const type = doc.type || "Stock";
         if (type === "Stock") {
-            let candle = await getLatestStockCandle(doc.ticker);
+            let candle = await getStockDayChangeCandle(doc.ticker);
             if (!candle) {
                 candle = {
-                    open: 0,
-                    close: 0
+                    yesterday: {
+                        close: 0
+                    },
+                    today: {
+                        close: 0
+                    }
                 }
             }
             const tickerDetails = await db.collection('stocks-detail').findOne({ ticker: doc.ticker });
@@ -70,9 +74,9 @@ export default async function watchlist(owner: string = '', params: any = {}): P
                 nextEarnings: nextEarnings,
                 nextEarningsTime: nextEarningsTime,
                 ticker: doc.ticker,
-                lastPrice: candle.close,
-                change: candle.close - candle.open,
-                changePercent: (candle.close - candle.open) / candle.open * 100,
+                lastPrice: candle.today.close,
+                change: candle.today.close - candle.yesterday.close,
+                changePercent: (candle.today.close - candle.yesterday.close) / candle.yesterday.close * 100,
                 currency: currency,
                 name: name,
                 intrinsicValue: intrinsicValue,

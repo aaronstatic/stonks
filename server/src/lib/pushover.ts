@@ -1,31 +1,47 @@
 import { DateTime } from "luxon";
 import { Pushover } from "pushover-js";
 import db from "./mongo";
+import { ObjectId } from "mongodb";
 
-const notify = new Pushover(process.env.PUSHOVER_USER || "",
-    process.env.PUSHOVER_TOKEN || "");
 
-export async function sendNotification(message: string, priority: any = 1) {
-    //record this notification in mongo so we dont repeat it per day
 
-    //Get date in new york
-    const ny = DateTime.local().setZone("America/New_York").startOf('day').toISODate();
-
+export async function sendNotification(message: string, owner: string = "", priority: any = 1) {
     const notifications = db.collection("notifications");
-    const existing = await notifications
-        .find({ message: message, date: ny })
-        .toArray();
 
-    if (existing.length > 0) {
-        return;
-    }
     await notifications.insertOne({
+        owner: owner,
         message: message,
-        date: ny
+        date: DateTime.now().toISO()
     });
 
-    console.log("Sending notification: " + message);
+    if (owner != "") {
+        let user = await db.collection("users").findOne({ _id: new ObjectId(owner) });
+        if (user && user.integration && user.integration.pushover) {
+            const pushoverUser = user.integration.pushover.user || "";
+            const pushoverToken = user.integration.pushover.token || "";
+            if (pushoverUser !== "" && pushoverToken !== "")
+                send(pushoverUser, pushoverToken, message, priority);
+        } else {
+            console.log("User not found or no integration");
+            return;
+        }
+    } else {
+        //send to all users
+        const users = await db.collection("users").find({}).toArray();
+        for (const user of users) {
+            if (user.integration && user.integration.pushover) {
+                const pushoverUser = user.integration.pushover.user || "";
+                const pushoverToken = user.integration.pushover.token || "";
+                if (pushoverUser !== "" && pushoverToken !== "")
+                    send(pushoverUser, pushoverToken, message, priority);
+            }
+        }
+    }
+}
+
+async function send(user: string, token: string, message: string, priority: any = 1) {
+    const notify = new Pushover(token, user);
     notify.setSound("magic");
     notify.setPriority(priority);
-    await notify.send("Stocks", message);
+    await notify.send("Stonks", message);
 }

@@ -93,8 +93,8 @@ export default function Candles({ ticker, type, title, avgOpen }: CandlesProps) 
         avgColor = downColor;
     }
 
-    const fvg = findMostRecentFairValueGap(data.candles);
-    console.log(fvg);
+    //const fvg = findMostRecentFairValueGap(data.candles);
+    //console.log(fvg);
 
 
     return (

@@ -13,7 +13,8 @@ class Watchlist extends CRUDTable {
         _id: "new",
         ticker: "",
         owner: "",
-        name: ""
+        name: "",
+        type: "Stock"
     };
 
     sort() {

@@ -5,7 +5,7 @@ import ContextNode from '../component/strategy/node/Context';
 import ConditionNode from '../component/strategy/node/Condition';
 import NotifyNode from '../component/strategy/node/Notify';
 
-import { StrategyNodeProps } from '../component/strategy/node/BaseNode';
+import { BaseNode, StrategyNodeProps } from '../component/strategy/node/BaseNode';
 
 import {
     ReactFlow,
@@ -49,6 +49,18 @@ const Wrapper = styled.div`
 const Flow = styled.div`
     flex: 1;
     min-height: 0;
+    .react-flow__handle.candles {
+        border-color: var(--rs-green-600);
+        background-color: var(--rs-green-600);
+    }
+    .react-flow__handle.number, .react-flow__handle.numberstream {
+        border-color: var(--rs-orange-600);
+        background-color: var(--rs-orange-600);
+    }
+    .react-flow__handle.trigger {
+        border-color: var(--rs-blue-600);
+        background-color: var(--rs-blue-600);
+    }
 `
 
 const AddNodePopup = styled.div`
@@ -133,6 +145,7 @@ const nodeTypes: NodeDef[] = [{
 
 export default class Strategy extends React.Component<any, StrategyState> {
     private nodeTypes: NodeTypes;
+    private nodeDefs: { [key: string]: NodeDef };
 
     declare context: React.ContextType<typeof ItemData>
 
@@ -153,11 +166,15 @@ export default class Strategy extends React.Component<any, StrategyState> {
         };
 
         const types: NodeTypes = {};
-        for (const { type, Component } of nodeTypes) {
+        const nodeDefs: { [key: string]: NodeDef } = {};
+        for (const nodeDef of nodeTypes) {
+            const { type, Component } = nodeDef;
             types[type] = this.getNodeType(Component);
+            nodeDefs[type] = nodeDef;
         }
 
         this.nodeTypes = types;
+        this.nodeDefs = nodeDefs;
     }
 
     componentDidMount() {
@@ -215,6 +232,7 @@ export default class Strategy extends React.Component<any, StrategyState> {
                             onNodesChange={this.onNodesChange}
                             onEdgesChange={this.onEdgesChange}
                             onConnect={this.onConnect}
+                            isValidConnection={this.isValidConnection}
                             onPaneContextMenu={this.onPaneContextMenu}
                             onPaneClick={() => this.setState({ showAddNode: false })}
                             onMove={(_e, data) => {
@@ -243,6 +261,54 @@ export default class Strategy extends React.Component<any, StrategyState> {
                 )}
             </Wrapper>
         )
+    }
+
+    isValidConnection = (connection: Connection | Edge) => {
+        //only 1 connection allowed to a target
+        if (this.state.edges.find(e => e.target === connection.target && e.targetHandle === connection.targetHandle)) {
+            return false;
+        }
+
+        const sourceNode = this.state.nodes.find(n => n.id === connection.source);
+        const targetNode = this.state.nodes.find(n => n.id === connection.target);
+
+        if (!sourceNode || !targetNode) {
+            return false;
+        }
+
+        if (!sourceNode.type || !targetNode.type) {
+            return false;
+        }
+
+        const sourceType = this.nodeDefs[sourceNode.type];
+        const targetType = this.nodeDefs[targetNode.type];
+
+        if (!sourceType || !targetType) {
+            return false;
+        }
+
+        const sourceNodeComponent = sourceType.Component as any;
+        const targetNodeComponent = targetType.Component as any;
+
+        const sourceHandle = sourceNodeComponent.outputs.find((h: { name: string }) => h.name === connection.sourceHandle);
+        let targetHandle = targetNodeComponent.inputs.find((h: { name: string }) => h.name === connection.targetHandle);
+        if (!targetHandle) {
+            targetHandle = targetNodeComponent.formInputs.find((h: { name: string }) => h.name === connection.targetHandle);
+        }
+
+        if (!sourceHandle || !targetHandle) {
+            return false;
+        }
+
+        if (sourceHandle.type === 'numberstream' && targetHandle.type == 'number') {
+            return true;
+        }
+
+        if (sourceHandle.type !== targetHandle.type) {
+            return false;
+        }
+
+        return true;
     }
 
     addNode = (type: NodeDef) => {

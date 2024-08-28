@@ -81,6 +81,14 @@ function processNode(node: Node, inputs: Inputs, context: any): Outputs {
         return inputs;
     }
     const instance = new NodeClass();
+    for (const key in inputs) {
+        const input = instance.inputs.find(i => i.name === key);
+        if (input) {
+            if (input.type === "number" && Array.isArray(inputs[key])) {
+                inputs[key] = inputs[key][inputs[key].length - 1];
+            }
+        }
+    }
     return instance.process(node.data, inputs, context);
 }
 
@@ -95,20 +103,32 @@ export default async function updateStrategies(now: DateTime): Promise<boolean> 
     await lastRunCollection.deleteMany({});
 
     now = now.setZone("America/New_York");
-    if (now.weekday > 5) {
-        //skip weekends
-        return true;
-    }
-    if (now.hour < 4 || now.hour > 20) {
-        //skip off hours
-        return true;
-    }
 
     for (const strategy of strategies) {
-        const applyTo = strategy.applyTo || "All";
+        let applyTo = strategy.applyTo || "All";
         if (!strategy.nodes || !strategy.edges) {
             continue;
         }
+
+        if (applyTo === "All" || applyTo === "Stocks") {
+            if (now.weekday > 5) {
+                //skip weekends
+                if (applyTo === "All") {
+                    applyTo = "Crypto";
+                } else {
+                    continue;
+                }
+            }
+            if (now.hour < 4 || now.hour > 20) {
+                //skip off hours
+                if (applyTo === "All") {
+                    applyTo = "Crypto";
+                } else {
+                    continue;
+                }
+            }
+        }
+
         let timeframe = strategy.timeframe || "1d";
 
         if (timeframe === "1d") {
@@ -158,7 +178,7 @@ export default async function updateStrategies(now: DateTime): Promise<boolean> 
                 const candles = await db.collection(`stocks-${timeframe}`).find({ ticker: ticker }).sort({ timestamp: -1 }).limit(limit).toArray();
                 candles.reverse();
 
-                await runStrategy(now, strategy.name, ticker, sortedNodes, edges, candles);
+                await runStrategy(now, strategy.name, ticker, sortedNodes, edges, candles, strategy.owner.toString());
             }
         }
         if (applyTo === "All" || applyTo === "Crypto") {
@@ -175,7 +195,7 @@ export default async function updateStrategies(now: DateTime): Promise<boolean> 
                 const candles = await db.collection(`crypto-${timeframe}`).find({ ticker: crypto }).sort({ timestamp: -1 }).limit(limit).toArray();
                 candles.reverse();
 
-                await runStrategy(now, strategy.name, crypto, sortedNodes, edges, candles);
+                await runStrategy(now, strategy.name, crypto, sortedNodes, edges, candles, strategy.owner.toString());
             }
         }
 
@@ -184,7 +204,7 @@ export default async function updateStrategies(now: DateTime): Promise<boolean> 
     return true;
 }
 
-async function runStrategy(now: DateTime, name: string, ticker: string, sortedNodes: Node[], edges: Edge[], candles: any[]) {
+async function runStrategy(now: DateTime, name: string, ticker: string, sortedNodes: Node[], edges: Edge[], candles: any[], owner: string) {
     const lastRunCollection = db.collection("strategy-lastrun");
     const lastCandle = candles[candles.length - 1];
 
@@ -195,7 +215,8 @@ async function runStrategy(now: DateTime, name: string, ticker: string, sortedNo
         Close: lastCandle.close,
         High: lastCandle.high,
         Low: lastCandle.low,
-        Volume: lastCandle.volume
+        Volume: lastCandle.volume,
+        User: owner
     };
 
     const nodeOutputs: Record<string, any> = {};

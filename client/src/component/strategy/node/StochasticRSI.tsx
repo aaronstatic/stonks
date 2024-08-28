@@ -1,4 +1,4 @@
-import { BaseNode, NodeData } from './BaseNode';
+import { BaseNode, NodeData, ValueType } from './BaseNode';
 import { Form, InputNumber } from 'rsuite';
 
 type StochasticRSINodeData = NodeData & {
@@ -19,24 +19,27 @@ export default class StochasticRSINode extends BaseNode<StochasticRSINodeData> {
         lengthStoch: 14
     }
 
-    inputs = [{
+    static inputs = [{
         name: 'Candles',
-        type: 'candles'
+        type: ValueType.candles
     }]
 
-    outputs = [{
+    static outputs = [{
         name: 'K',
-        type: 'number'
+        type: ValueType.numberstream
     }, {
         name: 'D',
-        type: 'number'
+        type: ValueType.numberstream
     }, {
         name: 'CrossUp',
-        type: 'trigger'
+        type: ValueType.trigger
     }, {
         name: 'CrossDown',
-        type: 'trigger'
+        type: ValueType.trigger
     }]
+
+    inputs = StochasticRSINode.inputs;
+    outputs = StochasticRSINode.outputs
 
     renderForm(data: StochasticRSINodeData) {
         return <>

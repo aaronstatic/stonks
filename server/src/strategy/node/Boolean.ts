@@ -2,6 +2,22 @@ import { Candle } from "@schema/report/candles";
 import BaseNode, { Inputs, Outputs, Params } from "./BaseNode";
 
 export default class BooleanNode extends BaseNode {
+    inputs = [{
+        name: 'Trigger1',
+        type: 'trigger'
+    }, {
+        name: 'Trigger2',
+        type: 'trigger'
+    }];
+
+    outputs = [{
+        name: 'True',
+        type: 'trigger'
+    }, {
+        name: 'False',
+        type: 'trigger'
+    }];
+
     process(params: Params, inputs: Inputs, context: Inputs): Outputs {
         const operation = params.type as string;
         let trigger1 = inputs.Trigger1 as boolean;

@@ -1,4 +1,4 @@
-import { BaseNode, NodeData } from './BaseNode';
+import { BaseNode, NodeData, ValueType } from './BaseNode';
 import { Form, InputNumber } from 'rsuite';
 
 type RSINodeData = NodeData & {
@@ -13,15 +13,18 @@ export default class RSINode extends BaseNode<RSINodeData> {
         length: 14
     }
 
-    inputs = [{
+    static inputs = [{
         name: 'Candles',
-        type: 'candles'
+        type: ValueType.candles
     }]
 
-    outputs = [{
+    static outputs = [{
         name: 'RSI',
-        type: 'number'
+        type: ValueType.numberstream
     }]
+
+    inputs = RSINode.inputs;
+    outputs = RSINode.outputs;
 
     renderForm(data: RSINodeData) {
         return <>

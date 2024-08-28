@@ -1,4 +1,4 @@
-import { BaseNode, NodeData } from './BaseNode';
+import { BaseNode, NodeData, ValueType } from './BaseNode';
 import { Form, InputPicker } from 'rsuite';
 
 type BooleanNodeData = NodeData & {
@@ -13,23 +13,26 @@ export default class BooleanNode extends BaseNode<BooleanNodeData> {
         type: "AND"
     }
 
-    inputs = [{
+    static inputs = [{
         name: 'Trigger 1',
         id: 'Trigger1',
-        type: 'trigger'
+        type: ValueType.trigger
     }, {
         name: 'Trigger 2',
         id: 'Trigger2',
-        type: 'trigger'
+        type: ValueType.trigger
     }]
 
-    outputs = [{
+    static outputs = [{
         name: 'True',
-        type: 'trigger'
+        type: ValueType.trigger
     }, {
         name: 'False',
-        type: 'trigger'
+        type: ValueType.trigger
     }]
+
+    inputs = BooleanNode.inputs;
+    outputs = BooleanNode.outputs;
 
     renderForm(data: BooleanNodeData) {
         return <>

@@ -11,7 +11,7 @@ export default async function updateGEX(now: DateTime): Promise<boolean> {
     now = now.setZone("America/New_York");
     if (now.weekday > 5) return true; //only run on weekdays
     if (now.hour < 8 || now.hour > 16) return true; //only run during market hours
-    if (now.minute == 15) return true; //only run quarter past the hour
+    if (now.minute != 0) return true; //only run quarter past the hour
 
     const tickers = ["SPY", "QQQ", "IWM", "DIA"];
     //add open holdings

@@ -3,6 +3,25 @@ import BaseNode, { Inputs, Outputs, Params } from "./BaseNode";
 import StochasticRSI from "../../lib/indicator/StochasticRSI";
 
 export default class StochasticRSINode extends BaseNode {
+    inputs = [{
+        name: 'Candles',
+        type: 'candles'
+    }];
+
+    outputs = [{
+        name: 'K',
+        type: 'numberstream'
+    }, {
+        name: 'D',
+        type: 'numberstream'
+    }, {
+        name: 'CrossUp',
+        type: 'boolean'
+    }, {
+        name: 'CrossDown',
+        type: 'boolean'
+    }];
+
     process(params: Params, inputs: Inputs, _context: Inputs): Outputs {
         const smoothK = params.k as number;
         const smoothD = params.d as number;

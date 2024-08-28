@@ -69,6 +69,7 @@ export default async function updateStocks(now: DateTime): Promise<boolean> {
     //add watchlist
     const watchlist = await db.collection('watchlist').find({}).toArray();
     for (const item of watchlist) {
+        if (item.type == "Crypto") continue;
         if (!uniqueTickers.includes(item.ticker)) {
             uniqueTickers.push(item.ticker);
         }

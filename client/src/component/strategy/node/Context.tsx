@@ -1,4 +1,4 @@
-import { BaseNode, NodeData } from './BaseNode';
+import { BaseNode, NodeData, ValueType } from './BaseNode';
 
 type ContextNodeData = NodeData & {
 
@@ -6,23 +6,25 @@ type ContextNodeData = NodeData & {
 
 export default class ContextNode extends BaseNode<ContextNodeData> {
     static displayName = "Context";
-    outputs = [{
+    static outputs = [{
         name: 'Candles',
-        type: 'candles'
+        type: ValueType.candles
     }, {
         name: 'Open',
-        type: 'value'
+        type: ValueType.number
     }, {
         name: 'High',
-        type: 'value'
+        type: ValueType.number
     }, {
         name: 'Low',
-        type: 'value'
+        type: ValueType.number
     }, {
         name: 'Close',
-        type: 'value'
+        type: ValueType.number
     }, {
         name: 'Volume',
-        type: 'value'
+        type: ValueType.number
     }]
+
+    outputs = ContextNode.outputs;
 }

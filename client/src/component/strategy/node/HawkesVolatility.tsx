@@ -1,4 +1,4 @@
-import { BaseNode, NodeData } from './BaseNode';
+import { BaseNode, NodeData, ValueType } from './BaseNode';
 import { Form, InputNumber } from 'rsuite';
 
 type HawkesVolatilityNodeData = NodeData & {
@@ -17,30 +17,33 @@ export default class HawkesVolatilityNode extends BaseNode<HawkesVolatilityNodeD
         quantileLength: 96
     }
 
-    inputs = [{
+    static inputs = [{
         name: 'Candles',
-        type: 'candles'
+        type: ValueType.candles
     }]
 
-    outputs = [{
+    static outputs = [{
         name: 'Hawkes',
-        type: 'number'
+        type: ValueType.numberstream
     }, {
         name: 'Quantile95',
-        type: 'number'
+        type: ValueType.numberstream
     }, {
         name: 'Quantile05',
-        type: 'number'
+        type: ValueType.numberstream
     }, {
         name: 'ATR',
-        type: 'number'
+        type: ValueType.numberstream
     }, {
         name: 'CrossUp',
-        type: 'trigger'
+        type: ValueType.trigger
     }, {
         name: 'CrossDown',
-        type: 'trigger'
+        type: ValueType.trigger
     }]
+
+    inputs = HawkesVolatilityNode.inputs;
+    outputs = HawkesVolatilityNode.outputs
 
     renderForm(data: HawkesVolatilityNodeData) {
         return <>

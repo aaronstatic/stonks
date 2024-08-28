@@ -4,6 +4,11 @@ import BaseNode, { Inputs, Outputs, Params } from "./BaseNode";
 import { sendNotification } from "../../lib/pushover";
 
 export default class NotifyNode extends BaseNode {
+    inputs = [{
+        name: 'Trigger',
+        type: 'trigger'
+    }];
+
     process(params: Params, inputs: Inputs, context: Inputs): Outputs {
         const trigger = inputs.Trigger as boolean;
 
@@ -13,7 +18,7 @@ export default class NotifyNode extends BaseNode {
             console.log("Notification:", this.getMessage(params.message as string, context));
 
             if (params.notify == "pushover") {
-                sendNotification(message);
+                sendNotification(message, context.User);
             }
         }
 

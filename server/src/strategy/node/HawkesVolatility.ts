@@ -4,6 +4,31 @@ import HawkesVolatility from "../../lib/indicator/HawkesVolatility";
 import ATR from "../../lib/indicator/ATR";
 
 export default class HawkesVolatilityNode extends BaseNode {
+    inputs = [{
+        name: 'Candles',
+        type: 'candles'
+    }];
+
+    outputs = [{
+        name: 'Hawkes',
+        type: 'numberstream'
+    }, {
+        name: 'Quantile95',
+        type: 'numberstream'
+    }, {
+        name: 'Quantile05',
+        type: 'numberstream'
+    }, {
+        name: 'ATR',
+        type: 'numberstream'
+    }, {
+        name: 'CrossUp',
+        type: 'trigger'
+    }, {
+        name: 'CrossDown',
+        type: 'trigger'
+    }];
+
     process(params: Params, inputs: Inputs, context: Inputs): Outputs {
         const candles = inputs.Candles as Candle[];
         const kappa = params.kappa as number;

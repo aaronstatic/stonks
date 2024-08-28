@@ -46,6 +46,19 @@ if (process.argv.length > 2) {
 const run = async () => {
     console.log("Running tasks");
     const now = DateTime.now().toUTC();
+    //set minute to closest 15min
+    const minute = now.minute;
+    let newMinute = minute;
+    if (minute < 15) {
+        newMinute = 0;
+    } else if (minute < 30) {
+        newMinute = 15;
+    } else if (minute < 45) {
+        newMinute = 30;
+    } else {
+        newMinute = 45;
+    }
+    now.set({ minute: newMinute });
     for (let taskName of tasksToRun) {
         const task = tasks[taskName];
         console.log(`Running task ${task.name}`);
