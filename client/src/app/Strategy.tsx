@@ -5,7 +5,7 @@ import ContextNode from '../component/strategy/node/Context';
 import ConditionNode from '../component/strategy/node/Condition';
 import NotifyNode from '../component/strategy/node/Notify';
 
-import { BaseNode, StrategyNodeProps } from '../component/strategy/node/BaseNode';
+import { StrategyNodeProps } from '../component/strategy/node/BaseNode';
 
 import {
     ReactFlow,

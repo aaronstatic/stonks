@@ -23,6 +23,7 @@ export default async function updateHistory(_now: DateTime) {
 async function updateHistoryForUser(owner: string) {
     const collection = db.collection('history');
     let currentDay = DateTime.now().toUTC().startOf("day").minus({ days: 2 });
+    //let currentDay = DateTime.now().toUTC().startOf("day").minus({ days: 60 });
     const end = DateTime.now().toUTC().startOf("day");
 
     while (currentDay <= end) {

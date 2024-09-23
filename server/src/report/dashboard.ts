@@ -11,6 +11,7 @@ import db from "../lib/mongo";
 import { DateTime } from "luxon";
 import { ObjectId } from "mongodb";
 import MultiLegOption from "@schema/multilegoption";
+import { getExchangeRate } from "../lib/currency";
 
 export const bondStocks = [
     "TLT"
@@ -22,6 +23,10 @@ export const goldStocks = [
 
 export default async function dashboard(owner: string = "", params: any = {}): Promise<DashboardReport> {
     let toDate = params.toDate || "";
+    let toDateDT = DateTime.fromISO(toDate + "T00:00:00.000Z").setZone("UTC");
+    if (toDate === "") {
+        toDateDT = DateTime.now().setZone("UTC").startOf('day');
+    }
 
     const openHoldings = await getOpenStockHoldings(owner, toDate);
 
@@ -191,6 +196,34 @@ export default async function dashboard(owner: string = "", params: any = {}): P
     });
 
     let totalRealized = 0;
+    let exchangeRate = 1;
+
+    let exchangeRates: { [currency: string]: number } = {};
+    if (currency !== "USD") {
+        exchangeRates["USD"] = await getExchangeRate("USD" + currency);
+        exchangeRate = exchangeRates["USD"];
+    }
+
+
+    const allTransactions = await db.collection('transaction').find({ owner: owner, type: "Crypto Derivative Trade" }).toArray();
+    let startOfFinancialYear = DateTime.fromObject({ month: 7, day: 1, year: toDateDT.year }).startOf('day');
+    if (toDateDT.month < 7) {
+        startOfFinancialYear = startOfFinancialYear.minus({ year: 1 });
+    }
+    const endOfFinancialYear = startOfFinancialYear.plus({ year: 1 });
+    const startOfDay = toDateDT.startOf('day');
+    const endOfDay = toDateDT.endOf('day');
+    for (const transaction of allTransactions) {
+        const timestamp = DateTime.fromISO(transaction.timestamp).toUTC();
+        if (timestamp > startOfFinancialYear && timestamp < endOfFinancialYear) {
+            totalRealized += (transaction.amount - transaction.fees) * exchangeRate;
+        }
+        if (timestamp > startOfDay && timestamp < endOfDay) {
+            dayTotal += (transaction.amount - transaction.fees) * exchangeRate;
+        }
+    }
+
+
     const allHoldings = await getAllHoldings(owner);
     for (const holding of allHoldings) {
         //get all trades
@@ -204,12 +237,20 @@ export default async function dashboard(owner: string = "", params: any = {}): P
         if (toDate === "") {
             toDate = DateTime.now().toISO();
         }
-        const toDateDT = DateTime.fromISO(toDate);
-        let startOfFinancialYear = DateTime.fromObject({ month: 7, day: 1, year: toDateDT.year }).startOf('day');
-        if (toDateDT.month < 7) {
-            startOfFinancialYear = startOfFinancialYear.minus({ year: 1 });
+
+
+        let exchangeRate = 1;
+        let holdingCurrency = holding.currency;
+        if (holdingCurrency == "USDT") {
+            holdingCurrency = "USD";
         }
-        const endOfFinancialYear = startOfFinancialYear.plus({ year: 1 });
+        if (holdingCurrency !== currency) {
+            if (!exchangeRates[holdingCurrency]) {
+                exchangeRate = await getExchangeRate(holdingCurrency + currency);
+            } else {
+                exchangeRate = exchangeRates[holdingCurrency];
+            }
+        }
 
         for (const trade of trades) {
             const time = DateTime.fromISO(trade.timestamp);
@@ -228,7 +269,7 @@ export default async function dashboard(owner: string = "", params: any = {}): P
             }
             averageOpenPrice = cost / quantity;
         }
-        totalRealized += realizedfy;
+        totalRealized += realizedfy * exchangeRate;
     }
 
     return {

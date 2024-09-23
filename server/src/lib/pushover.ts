@@ -20,7 +20,7 @@ export async function sendNotification(message: string, owner: string = "", prio
             const pushoverUser = user.integration.pushover.user || "";
             const pushoverToken = user.integration.pushover.token || "";
             if (pushoverUser !== "" && pushoverToken !== "")
-                send(pushoverUser, pushoverToken, message, priority);
+                await send(pushoverUser, pushoverToken, message, priority);
         } else {
             console.log("User not found or no integration");
             return;
@@ -33,15 +33,15 @@ export async function sendNotification(message: string, owner: string = "", prio
                 const pushoverUser = user.integration.pushover.user || "";
                 const pushoverToken = user.integration.pushover.token || "";
                 if (pushoverUser !== "" && pushoverToken !== "")
-                    send(pushoverUser, pushoverToken, message, priority);
+                    await send(pushoverUser, pushoverToken, message, priority);
             }
         }
     }
 }
 
 async function send(user: string, token: string, message: string, priority: any = 1) {
-    const notify = new Pushover(token, user);
+    const notify = new Pushover(user, token);
     notify.setSound("magic");
     notify.setPriority(priority);
-    await notify.send("Stonks", message);
+    await notify.send("Stocks", message);
 }

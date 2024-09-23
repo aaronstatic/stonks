@@ -18,6 +18,7 @@ import { ObjectId } from "mongodb";
 import updateGainers from "./task/update-gainers";
 import updateStrategies from "./task/update-strategies";
 import { DateTime } from "luxon";
+import testTask from "./task/test-task";
 
 let tasks: { [name: string]: BaseTask } = {
     updateCalendar,
@@ -32,7 +33,8 @@ let tasks: { [name: string]: BaseTask } = {
     updateHistory,
     updateIndices,
     updateOptions,
-    updateStrategies
+    updateStrategies,
+    testTask
 };
 
 let tasksToRun = [];
@@ -41,6 +43,8 @@ if (process.argv.length > 2) {
     tasksToRun = process.argv.slice(2);
 } else {
     tasksToRun = Object.keys(tasks);
+    //remove test task on scheduled runs
+    tasksToRun = tasksToRun.filter(task => task !== "testTask");
 }
 
 const run = async () => {
@@ -59,6 +63,10 @@ const run = async () => {
         newMinute = 45;
     }
     now.set({ minute: newMinute });
+
+    const start = DateTime.now();
+    let current = DateTime.now();
+    const timings: { [key: string]: number } = {};
     for (let taskName of tasksToRun) {
         const task = tasks[taskName];
         console.log(`Running task ${task.name}`);
@@ -66,7 +74,17 @@ const run = async () => {
         if (!result) {
             console.log(`Task ${task.name} failed`);
         }
+        const end = DateTime.now();
+        timings[task.name] = end.diff(current).as("milliseconds");
+        current = end;
     }
+
+    await db.collection("task-timings").insertOne({
+        start: start.toISO(),
+        end: current.toISO(),
+        timings
+    });
+
     process.exit(0);
 }
 

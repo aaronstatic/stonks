@@ -209,7 +209,7 @@ async function runStrategy(now: DateTime, name: string, ticker: string, sortedNo
     const lastCandle = candles[candles.length - 1];
 
     let context: { [key: string]: any } = {
-        ticker,
+        Ticker: ticker,
         Candles: candles,
         Open: lastCandle.open,
         Close: lastCandle.close,

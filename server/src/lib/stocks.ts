@@ -207,7 +207,7 @@ export async function getNextExpiryGamma(ticker: string): Promise<any> {
 
     for (const doc of gamma) {
         const date = DateTime.fromISO(doc.date + "T00:00:00.000Z").toUTC();
-        if (date >= today) {
+        if (date >= today && doc.levels.gammaFlip) {
             if (!earliest || date < earliest) {
                 earliest = date;
                 earliestDoc = doc;

@@ -1,4 +1,4 @@
-import { Handle, Position, useStore } from "@xyflow/react";
+import { useStore } from "@xyflow/react";
 import React from "react";
 import styled from "styled-components";
 import { ValueType } from "./node/BaseNode";

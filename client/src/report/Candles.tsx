@@ -39,31 +39,6 @@ const Wrapper = styled.div`
 
 `
 
-interface FairValueGap {
-    start: Candle;
-    end: Candle;
-}
-
-const findMostRecentFairValueGap = (candles: Candle[]): FairValueGap | null => {
-    for (let i = candles.length - 2; i >= 0; i--) {
-        const current = candles[i];
-        const next = candles[i + 1];
-
-        if (current.high < next.low) {
-            // Check if the gap has been filled
-            for (let j = i + 2; j < candles.length; j++) {
-                const subsequentCandle = candles[j];
-                if (subsequentCandle.low <= current.high || subsequentCandle.high >= next.low) {
-                    return null;
-                }
-            }
-            return { start: current, end: next };
-        }
-    }
-
-    return null;
-};
-
 export default function Candles({ ticker, type, title, avgOpen }: CandlesProps) {
     const [data, setData] = useState<CandleReport | null>(null);
 
