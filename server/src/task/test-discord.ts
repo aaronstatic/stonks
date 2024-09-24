@@ -3,7 +3,7 @@ import { sendToDiscord } from '../lib/discord';
 
 export default async function testDiscord(now: DateTime): Promise<boolean> {
     await sendToDiscord({
-        cmd: "message",
+        cmd: "msg",
         message: "Testing 123",
         channel: "test"
     });
