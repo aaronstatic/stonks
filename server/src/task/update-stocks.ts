@@ -45,7 +45,7 @@ export const sectorFunds = [
 export default async function updateStocks(now: DateTime): Promise<boolean> {
     now = now.setZone("America/New_York");
     if (now.weekday > 5) return true; //only run on weekdays
-    //if (now.hour < 4 || now.hour > 20) return true; //only run during market hours 
+    if (now.hour < 4 || now.hour > 20) return true; //only run during market hours 
 
     const detailCollection = db.collection('stocks-detail');
     const earningsCollection = db.collection('stocks-earnings');
