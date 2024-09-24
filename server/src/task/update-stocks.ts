@@ -261,9 +261,6 @@ export default async function updateStocks(now: DateTime): Promise<boolean> {
                 }, {
                     upsert: true
                 });
-
-                //wait 1 sec
-                await new Promise(resolve => setTimeout(resolve, 1000));
             }
         }
     }
