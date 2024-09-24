@@ -194,7 +194,7 @@ export async function sendToDiscord(packet: Packet): Promise<boolean> {
     //console.log("Sending packet to discord");
     //console.log(packet);
 
-    const ws = new WebSocket('ws://localhost:9090');
+    const ws = new WebSocket(process.env.DISCORD_WEBSOCKET || 'ws://localhost:9090');
 
     return new Promise<boolean>((resolve, reject) => {
         ws.on('open', function open() {
