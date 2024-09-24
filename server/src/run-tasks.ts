@@ -19,6 +19,7 @@ import updateGainers from "./task/update-gainers";
 import updateStrategies from "./task/update-strategies";
 import { DateTime } from "luxon";
 import testTask from "./task/test-task";
+import testDiscord from "./task/test-discord";
 
 let tasks: { [name: string]: BaseTask } = {
     updateCalendar,
@@ -34,7 +35,8 @@ let tasks: { [name: string]: BaseTask } = {
     updateIndices,
     updateOptions,
     updateStrategies,
-    testTask
+    testTask,
+    testDiscord
 };
 
 let tasksToRun = [];
@@ -43,8 +45,8 @@ if (process.argv.length > 2) {
     tasksToRun = process.argv.slice(2);
 } else {
     tasksToRun = Object.keys(tasks);
-    //remove test task on scheduled runs
-    tasksToRun = tasksToRun.filter(task => task !== "testTask");
+    //remove test tasks on scheduled runs
+    tasksToRun = tasksToRun.filter(task => task.indexOf("test") === -1);
 }
 
 const run = async () => {
